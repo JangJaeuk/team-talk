@@ -1,7 +1,7 @@
 "use client";
 
 import api from "@/lib/axios"; // 커스텀 axios 인스턴스 사용
-import { ChatRoom } from "@/types";
+import { ChatRoom, Message } from "@/types";
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
@@ -50,14 +50,28 @@ export function RoomList({ onJoinRoom }: RoomListProps) {
         setRooms(updatedRooms);
       });
 
+      // 새 메시지가 오면 방 목록 갱신
+      socket.on("message:new", () => {
+        fetchRooms();
+      });
+
       return () => {
         socket.off("room:list");
+        socket.off("message:new");
         socket.disconnect();
       };
     } catch (error) {
       console.error("Socket connection error:", error);
     }
   }, []);
+
+  const formatTimestamp = (timestamp: Message["createdAt"]) => {
+    if (!timestamp) return "";
+    const date = new Date(
+      timestamp._seconds * 1000 + timestamp._nanoseconds / 1000000
+    );
+    return date.toLocaleString();
+  };
 
   // 방 검색
   const handleSearch = (query: string) => {
@@ -86,10 +100,6 @@ export function RoomList({ onJoinRoom }: RoomListProps) {
     }
   };
 
-  if (isLoading) {
-    return <div className="p-4 text-center">Loading...</div>;
-  }
-
   return (
     <div className="p-4">
       <div className="flex justify-between mb-4">
@@ -108,25 +118,46 @@ export function RoomList({ onJoinRoom }: RoomListProps) {
         </button>
       </div>
 
-      <div className="space-y-2">
-        {rooms.map((room) => (
-          <div
-            key={room.id}
-            className="border rounded p-4 hover:bg-gray-50 cursor-pointer"
-            onClick={() => onJoinRoom(room.id)}
-          >
-            <div className="flex justify-between items-center">
-              <h3 className="font-bold">{room.name}</h3>
-              <span className="text-sm text-gray-500">
-                {room.participantCount}명 참여 중
-              </span>
-            </div>
-            {room.description && (
-              <p className="text-sm text-gray-600 mt-1">{room.description}</p>
-            )}
-          </div>
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="text-center py-4">로딩 중...</div>
+      ) : (
+        <div className="space-y-2">
+          {rooms
+            .filter((room) =>
+              room.name.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+            .map((room) => (
+              <div
+                key={room.id}
+                onClick={() => onJoinRoom(room.id)}
+                className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-lg font-semibold">{room.name}</h3>
+                  <span className="text-sm text-gray-500">
+                    {room.lastMessage &&
+                      formatTimestamp(room.lastMessage.createdAt)}
+                  </span>
+                </div>
+                <p className="text-gray-600 text-sm truncate">
+                  {room.lastMessage ? (
+                    <>
+                      <span className="font-medium">
+                        {room.lastMessage.sender.nickname}:{" "}
+                      </span>
+                      {room.lastMessage.content}
+                    </>
+                  ) : (
+                    "아직 메시지가 없습니다."
+                  )}
+                </p>
+                <div className="mt-2 text-xs text-gray-500">
+                  참여자 {room.participantCount}명
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
 
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">

@@ -23,13 +23,39 @@ export const roomService = {
       .orderBy("createdAt", "desc")
       .get();
 
-    return snapshot.docs.map(
+    const rooms = snapshot.docs.map(
       (doc) =>
         ({
           id: doc.id,
           ...doc.data(),
         } as ChatRoom)
     );
+
+    // 각 방의 최신 메시지 가져오기
+    const roomsWithLastMessage = await Promise.all(
+      rooms.map(async (room) => {
+        const messageSnapshot = await db
+          .collection("messages")
+          .where("roomId", "==", room.id)
+          .orderBy("createdAt", "desc")
+          .limit(1)
+          .get();
+
+        const lastMessage = messageSnapshot.docs[0]
+          ? ({
+              id: messageSnapshot.docs[0].id,
+              ...messageSnapshot.docs[0].data(),
+            } as Message)
+          : null;
+
+        return {
+          ...room,
+          lastMessage,
+        };
+      })
+    );
+
+    return roomsWithLastMessage;
   },
 
   // 단일 채팅방 조회

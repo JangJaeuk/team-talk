@@ -26,6 +26,7 @@ export interface ChatRoom {
   createdBy: string;
   createdAt: Date;
   participantCount: number;
+  lastMessage?: Message | null;
 }
 
 export interface Message {

@@ -233,8 +233,6 @@ io.on("connection", (socket) => {
         },
       });
 
-      console.log("확인", messageId);
-
       const message = {
         id: messageId,
         ...messageData,
@@ -248,7 +246,12 @@ io.on("connection", (socket) => {
         isEdited: false,
       };
 
+      // 해당 방에 새 메시지 전송
       io.to(message.roomId).emit("message:new", message);
+
+      // 방 목록 갱신을 위해 최신 방 목록을 모든 클라이언트에게 전송
+      const updatedRooms = await roomService.getRooms();
+      io.emit("room:list", updatedRooms);
     } catch (error) {
       console.error("Error sending message:", error);
     }

@@ -12,6 +12,7 @@ export interface ChatRoom {
   createdBy: string; // 방 생성자 ID
   createdAt: Date;
   participantCount: number;
+  lastMessage?: Message | null;
 }
 
 export interface Message {
