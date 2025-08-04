@@ -1,55 +1,48 @@
 "use client";
 
-import { connectSocket, getSocket } from "@/lib/socket";
+import { connectSocket, disconnectSocket, getSocket } from "@/lib/socket";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useChatStore } from "@/store/useChatStore";
-import { useCallback, useEffect } from "react";
+import { Message } from "@/types";
+import { useEffect } from "react";
 
-export function useSocket(roomId: string) {
-  const { addMessage } = useChatStore();
+interface UseSocketOptions {
+  onMessage?: (message: Message) => void;
+}
+
+export const useSocket = (roomId: string, options: UseSocketOptions = {}) => {
   const { user } = useAuthStore();
 
   useEffect(() => {
-    try {
-      // 먼저 소켓 연결 초기화
-      connectSocket(roomId);
+    connectSocket(roomId);
+    const socket = getSocket(roomId);
 
-      // 그 다음 소켓 인스턴스 가져오기
-      const socket = getSocket(roomId);
+    socket.on("message:new", (message: Message) => {
+      options.onMessage?.(message);
+    });
 
-      // 메시지 수신 이벤트 리스너
-      socket.on("message:new", (message) => {
-        console.log("Received new message:", message);
-        addMessage(message);
-      });
+    socket.emit("room:join", roomId);
 
-      return () => {
-        if (socket.connected) {
-          socket.off("message:new");
-        }
-      };
-    } catch (error) {
-      console.error("Error setting up socket in useSocket:", error);
-    }
-  }, [roomId, addMessage]);
+    return () => {
+      socket.emit("room:leave", roomId);
+      socket.off("message:new");
+      disconnectSocket(roomId);
+    };
+  }, [roomId, options.onMessage]);
 
-  const sendMessage = useCallback(
-    (content: string) => {
+  return {
+    sendMessage: (content: string) => {
       if (!user) return;
-
-      try {
-        const socket = getSocket(roomId);
-        socket.emit("message:send", {
-          content,
-          roomId,
-          sender: user,
-        });
-      } catch (error) {
-        console.error("Error sending message:", error);
-      }
+      const socket = getSocket(roomId);
+      socket.emit("message:send", {
+        content,
+        roomId,
+        sender: {
+          id: user.id,
+          email: user.email,
+          nickname: user.nickname,
+          isOnline: true,
+        },
+      });
     },
-    [roomId, user]
-  );
-
-  return { sendMessage };
-}
+  };
+};

@@ -1,9 +1,9 @@
 "use client";
 
 import api from "@/lib/axios"; // 커스텀 axios 인스턴스 사용
-import { connectSocket, getSocket } from "@/lib/socket";
 import { ChatRoom } from "@/types";
 import { useEffect, useState } from "react";
+import { io } from "socket.io-client";
 
 interface RoomListProps {
   onJoinRoom: (roomId: string) => void;
@@ -35,8 +35,14 @@ export function RoomList({ onJoinRoom }: RoomListProps) {
 
     // Socket.IO 연결 설정
     try {
-      connectSocket("lobby");
-      const socket = getSocket("lobby");
+      const socket = io(
+        process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:4000",
+        {
+          auth: {
+            token: localStorage.getItem("token"),
+          },
+        }
+      );
 
       // 방 목록 업데이트 구독
       socket.on("room:list", (updatedRooms) => {
@@ -46,6 +52,7 @@ export function RoomList({ onJoinRoom }: RoomListProps) {
 
       return () => {
         socket.off("room:list");
+        socket.disconnect();
       };
     } catch (error) {
       console.error("Socket connection error:", error);

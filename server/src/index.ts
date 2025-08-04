@@ -73,7 +73,7 @@ app.get("/api/auth/me", authMiddleware, async (req, res) => {
   }
 });
 
-// 보호된 API 엔드포인트
+// 채팅방 목록 조회
 app.get("/api/rooms", authMiddleware, async (req, res) => {
   try {
     const rooms = await roomService.getRooms();
@@ -81,6 +81,23 @@ app.get("/api/rooms", authMiddleware, async (req, res) => {
   } catch (error) {
     console.error("Error fetching rooms:", error);
     res.status(500).json({ error: "Failed to fetch rooms" });
+  }
+});
+
+// 단일 채팅방 조회
+app.get("/api/rooms/:roomId", authMiddleware, async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const room = await roomService.getRoom(roomId);
+
+    if (!room) {
+      return res.status(404).json({ error: "Room not found" });
+    }
+
+    res.json(room);
+  } catch (error) {
+    console.error("Error fetching room:", error);
+    res.status(500).json({ error: "Failed to fetch room" });
   }
 });
 
@@ -100,6 +117,25 @@ app.post("/api/rooms", authMiddleware, async (req, res) => {
   } catch (error) {
     console.error("Error creating room:", error);
     res.status(500).json({ error: "Failed to create room" });
+  }
+});
+
+// 메시지 히스토리 조회
+app.get("/api/rooms/:roomId/messages", authMiddleware, async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const { limit = "30", lastMessageId } = req.query;
+
+    const messages = await messageService.getMessages(
+      roomId,
+      parseInt(limit as string),
+      lastMessageId as string | undefined
+    );
+
+    res.json(messages);
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    res.status(500).json({ error: "메시지 조회 중 오류가 발생했습니다." });
   }
 });
 
@@ -142,6 +178,8 @@ io.on("connection", (socket) => {
 
     socket.join(roomId);
     currentRoomId = roomId;
+
+    console.log("이거 봐봐", roomId);
 
     try {
       // 참여자 수 증가
@@ -194,6 +232,8 @@ io.on("connection", (socket) => {
           isOnline: true,
         },
       });
+
+      console.log("확인", messageId);
 
       const message = {
         id: messageId,

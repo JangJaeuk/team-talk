@@ -1,12 +1,10 @@
 "use client";
 
-import { useSocket } from "@/hooks/useSocket";
-import { connectSocket, getSocket } from "@/lib/socket";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useChatStore } from "@/store/useChatStore";
 import { ChatRoom } from "@/types";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { RoomList } from "./RoomList";
 
 export function Chat() {
@@ -14,28 +12,7 @@ export function Chat() {
   const [currentRoom, setCurrentRoom] = useState<ChatRoom | null>(null);
   const { user, logout } = useAuthStore();
   const { messages, clearMessages } = useChatStore();
-  const { sendMessage } = useSocket(currentRoom?.id || "lobby");
   const router = useRouter();
-
-  useEffect(() => {
-    const socket = getSocket("lobby");
-    connectSocket("lobby");
-
-    socket.on("connect", () => {
-      console.log("Socket connected");
-      setIsConnected(true);
-    });
-
-    socket.on("disconnect", () => {
-      console.log("Socket disconnected");
-      setIsConnected(false);
-    });
-
-    return () => {
-      socket.off("connect");
-      socket.off("disconnect");
-    };
-  }, []);
 
   const handleJoinRoom = (roomId: string) => {
     router.push(`/rooms/${roomId}`);

@@ -1,7 +1,8 @@
 export interface User {
   id: string;
+  email: string;
   nickname: string;
-  status: "online" | "offline";
+  isOnline: boolean;
 }
 
 export interface ChatRoom {
@@ -16,10 +17,12 @@ export interface ChatRoom {
 export interface Message {
   id: string;
   content: string;
-  sender: User;
   roomId: string;
-  createdAt: Date;
-  updatedAt?: Date;
+  sender: User;
+  createdAt: {
+    _seconds: number;
+    _nanoseconds: number;
+  };
   isEdited: boolean;
 }
 
