@@ -1,7 +1,22 @@
+// Express의 Request 타입 확장
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        uid: string;
+        email?: string;
+        nickname?: string;
+      };
+    }
+  }
+}
+
 export interface User {
   id: string;
+  email: string;
   nickname: string;
-  status: "online" | "offline";
+  isOnline: boolean;
+  lastSeen?: Date;
 }
 
 export interface ChatRoom {
@@ -19,7 +34,6 @@ export interface Message {
   sender: User;
   roomId: string;
   createdAt: Date;
-  updatedAt?: Date;
   isEdited: boolean;
 }
 
@@ -32,7 +46,6 @@ export interface ServerToClientEvents {
   "room:leave": (roomId: string) => void;
   "room:list": (rooms: ChatRoom[]) => void;
   "room:messages": (messages: Message[]) => void;
-  "room:updated": (room: ChatRoom) => void;
   "typing:start": (userId: string) => void;
   "typing:stop": (userId: string) => void;
 }

@@ -3,14 +3,16 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { config } from "./config";
-import {
-  ChatRoom,
-  ClientToServerEvents,
-  Message,
-  ServerToClientEvents,
-} from "./types";
+import { db } from "./config/firebase";
+import { authMiddleware } from "./middleware/auth";
+import { authService } from "./services/auth";
+import { messageService, roomService, userService } from "./services/firebase";
+import { ClientToServerEvents, ServerToClientEvents } from "./types";
 
 const app = express();
+app.use(cors());
+app.use(express.json());
+
 const httpServer = createServer(app);
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
   cors: {
@@ -19,69 +21,106 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
   },
 });
 
-// 미들웨어 설정
-app.use(
-  cors({
-    origin: config.corsOrigin,
-    credentials: true,
-  })
-);
-app.use(express.json());
-
-// 임시 데이터 스토어 (실제 구현시 DB로 대체)
-const chatRooms = new Map<string, ChatRoom>([
-  [
-    "room1",
-    {
-      id: "room1",
-      name: "일반 채팅방",
-      description: "누구나 참여 가능한 채팅방입니다.",
-      createdBy: "system",
-      createdAt: new Date(),
-      participantCount: 0,
-    },
-  ],
-  [
-    "room2",
-    {
-      id: "room2",
-      name: "개발자 채팅방",
-      description: "개발 관련 대화를 나누는 채팅방입니다.",
-      createdBy: "system",
-      createdAt: new Date(),
-      participantCount: 0,
-    },
-  ],
-]);
-const messages = new Map<string, Message[]>();
-
-// HTTP API 엔드포인트
-app.get("/api/rooms", (req, res) => {
-  const rooms = Array.from(chatRooms.values());
-  res.json(rooms);
-});
-
-app.get("/api/rooms/:roomId", (req, res) => {
-  const room = chatRooms.get(req.params.roomId);
-  if (!room) {
-    return res.status(404).json({ error: "Room not found" });
+// 인증 API 엔드포인트
+app.post("/api/auth/register", async (req, res) => {
+  try {
+    const { email, password, nickname } = req.body;
+    const { user, token } = await authService.register(
+      email,
+      password,
+      nickname
+    );
+    res.status(201).json({ user, token });
+  } catch (error) {
+    console.error("Error registering user:", error);
+    res.status(400).json({
+      error: error instanceof Error ? error.message : "Failed to register user",
+    });
   }
-  res.json(room);
 });
 
-app.post("/api/rooms", (req, res) => {
-  const { name, description } = req.body;
-  const roomId = Date.now().toString();
-  const newRoom: ChatRoom = {
-    id: roomId,
-    name,
-    description,
-    createdBy: "user", // 실제로는 인증된 사용자 ID
-    createdAt: new Date(),
-    participantCount: 0,
-  };
-  chatRooms.set(roomId, newRoom);
-  res.status(201).json(newRoom);
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const { user, token } = await authService.login(email, password);
+    res.status(200).json({ user, token });
+  } catch (error) {
+    console.error("Error logging in:", error);
+    res.status(401).json({
+      error: error instanceof Error ? error.message : "Invalid credentials",
+    });
+  }
+});
+
+// 사용자 정보 조회
+app.get("/api/auth/me", authMiddleware, async (req, res) => {
+  try {
+    const userDoc = await db.collection("users").doc(req.user!.uid).get();
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const userData = userDoc.data();
+    res.json({
+      id: userDoc.id,
+      email: userData!.email,
+      nickname: userData!.nickname,
+      isOnline: userData!.isOnline,
+    });
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    res.status(500).json({ error: "Failed to fetch user data" });
+  }
+});
+
+// 보호된 API 엔드포인트
+app.get("/api/rooms", authMiddleware, async (req, res) => {
+  try {
+    const rooms = await roomService.getRooms();
+    res.json(rooms);
+  } catch (error) {
+    console.error("Error fetching rooms:", error);
+    res.status(500).json({ error: "Failed to fetch rooms" });
+  }
+});
+
+app.post("/api/rooms", authMiddleware, async (req, res) => {
+  try {
+    const { name, description } = req.body;
+    const roomId = await roomService.createRoom({
+      name,
+      description,
+      createdBy: req.user!.uid,
+    });
+
+    const rooms = await roomService.getRooms();
+    io.emit("room:list", rooms);
+
+    res.status(201).json({ id: roomId });
+  } catch (error) {
+    console.error("Error creating room:", error);
+    res.status(500).json({ error: "Failed to create room" });
+  }
+});
+
+// Socket.IO 연결 시 토큰 검증
+io.use(async (socket, next) => {
+  try {
+    const token = socket.handshake.auth.token;
+    if (!token) {
+      return next(new Error("Authentication error"));
+    }
+
+    const decoded = authService.verifyToken(token);
+    socket.data.user = {
+      uid: decoded.uid,
+      email: decoded.email,
+      nickname: decoded.nickname,
+    };
+    next();
+  } catch (error) {
+    next(new Error("Authentication error"));
+  }
 });
 
 // Socket.IO 이벤트 핸들러
@@ -89,74 +128,128 @@ io.on("connection", (socket) => {
   console.log("New client connected");
   let currentRoomId: string | null = null;
 
+  // 사용자 온라인 상태 업데이트
+  userService.updateUserStatus(socket.data.user.uid, true);
+
   // 방 참여
-  socket.on("room:join", (roomId) => {
+  socket.on("room:join", async (roomId) => {
     console.log(`Client ${socket.id} joining room ${roomId}`);
 
     // 이전 방에서 나가기
     if (currentRoomId) {
-      handleLeaveRoom(currentRoomId);
+      await handleLeaveRoom(currentRoomId);
     }
 
     socket.join(roomId);
     currentRoomId = roomId;
 
-    // 방 참여자 수 증가
-    const room = chatRooms.get(roomId);
-    if (room) {
-      room.participantCount = (room.participantCount || 0) + 1;
-      chatRooms.set(roomId, room);
-      // 모든 클라이언트에 업데이트된 방 목록 전송
-      io.emit("room:list", Array.from(chatRooms.values()));
+    try {
+      // 참여자 수 증가
+      await roomService.updateParticipantCount(roomId, 1);
+
+      // 방 메시지 목록 전송
+      const messages = await messageService.getMessagesByRoom(roomId);
+      socket.emit("room:messages", messages);
+
+      // 업데이트된 방 목록 브로드캐스트
+      const rooms = await roomService.getRooms();
+      io.emit("room:list", rooms);
+    } catch (error) {
+      console.error("Error handling room join:", error);
     }
   });
 
   // 방 나가기 처리 함수
-  const handleLeaveRoom = (roomId: string) => {
+  const handleLeaveRoom = async (roomId: string) => {
     console.log(`Client ${socket.id} leaving room ${roomId}`);
     socket.leave(roomId);
 
-    const room = chatRooms.get(roomId);
-    if (room) {
-      room.participantCount = Math.max(0, (room.participantCount || 0) - 1);
-      chatRooms.set(roomId, room);
-      // 모든 클라이언트에 업데이트된 방 목록 전송
-      io.emit("room:list", Array.from(chatRooms.values()));
+    try {
+      // 참여자 수 감소
+      await roomService.updateParticipantCount(roomId, -1);
+
+      // 업데이트된 방 목록 브로드캐스트
+      const rooms = await roomService.getRooms();
+      io.emit("room:list", rooms);
+    } catch (error) {
+      console.error("Error handling room leave:", error);
     }
   };
 
   // 방 나가기 이벤트
-  socket.on("room:leave", (roomId) => {
-    handleLeaveRoom(roomId);
+  socket.on("room:leave", async (roomId) => {
+    await handleLeaveRoom(roomId);
     currentRoomId = null;
   });
 
   // 메시지 전송
-  socket.on("message:send", (messageData) => {
-    const room = chatRooms.get(messageData.roomId);
-    if (!room) return;
+  socket.on("message:send", async (messageData) => {
+    try {
+      const messageId = await messageService.createMessage({
+        ...messageData,
+        sender: {
+          id: socket.data.user.uid,
+          email: socket.data.user.email!,
+          nickname: messageData.sender.nickname,
+          isOnline: true,
+        },
+      });
 
-    const message: Message = {
-      id: Date.now().toString(),
-      ...messageData,
-      createdAt: new Date(),
-      isEdited: false,
-    };
+      const message = {
+        id: messageId,
+        ...messageData,
+        sender: {
+          id: socket.data.user.uid,
+          email: socket.data.user.email!,
+          nickname: messageData.sender.nickname,
+          isOnline: true,
+        },
+        createdAt: new Date(),
+        isEdited: false,
+      };
 
-    // 메시지 저장
-    const roomMessages = messages.get(message.roomId) || [];
-    messages.set(message.roomId, [...roomMessages, message]);
+      io.to(message.roomId).emit("message:new", message);
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  });
 
-    // 해당 방의 모든 사용자에게 메시지 브로드캐스트
-    io.to(message.roomId).emit("message:new", message);
+  // 메시지 수정
+  socket.on("message:update", async (messageId, content) => {
+    try {
+      await messageService.updateMessage(messageId, content);
+      // 업데이트된 메시지를 방의 모든 사용자에게 브로드캐스트
+      if (currentRoomId) {
+        const messages = await messageService.getMessagesByRoom(currentRoomId);
+        io.to(currentRoomId).emit("room:messages", messages);
+      }
+    } catch (error) {
+      console.error("Error updating message:", error);
+    }
+  });
+
+  // 메시지 삭제
+  socket.on("message:delete", async (messageId) => {
+    try {
+      await messageService.deleteMessage(messageId);
+      // 삭제 후 메시지 목록을 방의 모든 사용자에게 브로드캐스트
+      if (currentRoomId) {
+        const messages = await messageService.getMessagesByRoom(currentRoomId);
+        io.to(currentRoomId).emit("room:messages", messages);
+      }
+    } catch (error) {
+      console.error("Error deleting message:", error);
+    }
   });
 
   // 연결 끊김 처리
-  socket.on("disconnect", () => {
+  socket.on("disconnect", async () => {
     console.log("Client disconnected");
     if (currentRoomId) {
-      handleLeaveRoom(currentRoomId);
+      await handleLeaveRoom(currentRoomId);
     }
+    // 사용자 오프라인 상태 업데이트
+    await userService.updateUserStatus(socket.data.user.uid, false);
   });
 });
 
