@@ -4,24 +4,26 @@ import { useSocket } from "@/hooks/useSocket";
 import { connectSocket, getSocket } from "@/lib/socket";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useChatStore } from "@/store/useChatStore";
+import { ChatRoom } from "@/types";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { RoomList } from "./RoomList";
 
 export function Chat() {
   const [nickname, setNickname] = useState("");
   const [message, setMessage] = useState("");
   const [isConnected, setIsConnected] = useState(false);
+  const [currentRoom, setCurrentRoom] = useState<ChatRoom | null>(null);
   const { user, login, logout } = useAuthStore();
-  const { messages } = useChatStore();
-  const { sendMessage } = useSocket();
+  const { messages, clearMessages } = useChatStore();
+  const { sendMessage } = useSocket(currentRoom?.id || "lobby");
+  const router = useRouter();
 
   useEffect(() => {
     if (user) {
-      const socket = getSocket();
+      const socket = getSocket("lobby");
+      connectSocket("lobby");
 
-      // 소켓 연결
-      connectSocket();
-
-      // 연결 상태 모니터링
       socket.on("connect", () => {
         console.log("Socket connected");
         setIsConnected(true);
@@ -46,97 +48,52 @@ export function Chat() {
     }
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (message.trim() && user) {
-      const newMessage = {
-        content: message.trim(),
-        roomId: "test-room",
-        sender: user,
-      };
-
-      console.log("Sending message:", newMessage);
-      sendMessage(message.trim(), "test-room");
-      setMessage("");
-    }
+  const handleJoinRoom = (roomId: string) => {
+    router.push(`/rooms/${roomId}`);
   };
 
-  return (
-    <main className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">팀톡 테스트</h1>
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-md w-96">
+          <h1 className="text-2xl font-bold mb-6 text-center">팀톡 로그인</h1>
+          <form onSubmit={handleLogin}>
+            <input
+              type="text"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              placeholder="닉네임을 입력하세요"
+              className="w-full border p-2 rounded mb-4"
+            />
+            <button
+              type="submit"
+              className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
+              시작하기
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
-      {!user ? (
-        <form onSubmit={handleLogin} className="mb-4">
-          <input
-            type="text"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            placeholder="닉네임을 입력하세요"
-            className="border p-2 mr-2"
-          />
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded"
-          >
-            로그인
-          </button>
-        </form>
-      ) : (
-        <div>
-          <div className="mb-4">
-            <span className="mr-2">{user.nickname}님 환영합니다!</span>
-            <span className="mr-2 text-sm">
-              {isConnected ? (
-                <span className="text-green-500">●</span>
-              ) : (
-                <span className="text-red-500">●</span>
-              )}
-              {isConnected ? " 연결됨" : " 연결 안됨"}
-            </span>
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto p-4">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">채팅방 목록</h1>
+          <div className="flex items-center">
+            <span className="mr-4">{user.nickname}님 환영합니다!</span>
             <button
               onClick={() => logout()}
-              className="bg-red-500 text-white px-4 py-2 rounded"
+              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
             >
               로그아웃
             </button>
           </div>
-
-          <div className="border rounded p-4 mb-4 h-80 overflow-y-auto">
-            {messages.map((msg, index) => (
-              <div
-                key={msg.id || index}
-                className={`mb-2 ${
-                  msg.sender.id === user.id ? "text-right" : "text-left"
-                }`}
-              >
-                <span className="text-sm text-gray-500">
-                  {msg.sender.nickname}:{" "}
-                </span>
-                <span>{msg.content}</span>
-              </div>
-            ))}
-          </div>
-
-          <form onSubmit={handleSendMessage}>
-            <div className="flex">
-              <input
-                type="text"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="메시지를 입력하세요"
-                className="flex-1 border p-2 mr-2"
-              />
-              <button
-                type="submit"
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-                disabled={!isConnected}
-              >
-                전송
-              </button>
-            </div>
-          </form>
         </div>
-      )}
-    </main>
+        <RoomList onJoinRoom={handleJoinRoom} />
+      </div>
+    </div>
   );
 }

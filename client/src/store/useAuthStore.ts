@@ -1,4 +1,3 @@
-import { connectSocket, disconnectSocket } from "@/lib/socket";
 import { User } from "@/types";
 import { create } from "zustand";
 
@@ -24,20 +23,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: (nickname: string) => {
     try {
       const newUser: User = {
-        id: Math.random().toString(36).substr(2, 9), // 임시 ID 생성
+        id: Math.random().toString(36).substr(2, 9),
         nickname,
         status: "online",
       };
 
       set({ user: newUser, isAuthenticated: true, error: null });
-      connectSocket(); // 소켓 연결
     } catch (error) {
       set({ error: "로그인 중 오류가 발생했습니다." });
     }
   },
 
   logout: () => {
-    disconnectSocket(); // 소켓 연결 해제
     set({ user: null, isAuthenticated: false });
   },
 

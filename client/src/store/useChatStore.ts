@@ -44,7 +44,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   updateMessage: (messageId, content) => {
-    const socket = getSocket();
+    const currentRoom = get().currentRoom;
+    if (!currentRoom) return;
+
+    const socket = getSocket(currentRoom.id);
     socket.emit("message:update", messageId, content);
 
     set((state) => ({
@@ -57,7 +60,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   deleteMessage: (messageId) => {
-    const socket = getSocket();
+    const currentRoom = get().currentRoom;
+    if (!currentRoom) return;
+
+    const socket = getSocket(currentRoom.id);
     socket.emit("message:delete", messageId);
 
     set((state) => ({

@@ -8,8 +8,9 @@ export interface ChatRoom {
   id: string;
   name: string;
   description?: string;
-  participants: User[];
+  createdBy: string;
   createdAt: Date;
+  participantCount: number;
 }
 
 export interface Message {
@@ -22,17 +23,18 @@ export interface Message {
   isEdited: boolean;
 }
 
-// Socket.IO 이벤트 타입 정의
 export interface ServerToClientEvents {
   "message:new": (message: Message) => void;
   "message:update": (message: Message) => void;
   "message:delete": (messageId: string) => void;
-  "user:status": (user: User) => void;
-  "room:join": (room: ChatRoom) => void;
+  "user:status": (userId: string, isOnline: boolean) => void;
+  "room:join": (roomId: string) => void;
   "room:leave": (roomId: string) => void;
+  "room:list": (rooms: ChatRoom[]) => void;
   "room:messages": (messages: Message[]) => void;
-  "typing:start": (data: { userId: string; roomId: string }) => void;
-  "typing:stop": (data: { userId: string; roomId: string }) => void;
+  "room:updated": (room: ChatRoom) => void;
+  "typing:start": (userId: string) => void;
+  "typing:stop": (userId: string) => void;
 }
 
 export interface ClientToServerEvents {
@@ -41,8 +43,10 @@ export interface ClientToServerEvents {
   ) => void;
   "message:update": (messageId: string, content: string) => void;
   "message:delete": (messageId: string) => void;
+  "room:create": (room: { name: string; description?: string }) => void;
   "room:join": (roomId: string) => void;
   "room:leave": (roomId: string) => void;
+  "room:search": (query: string) => void;
   "typing:start": (roomId: string) => void;
   "typing:stop": (roomId: string) => void;
 }

@@ -8,8 +8,9 @@ export interface ChatRoom {
   id: string;
   name: string;
   description?: string;
-  participants: User[];
+  createdBy: string; // 방 생성자 ID
   createdAt: Date;
+  participantCount: number;
 }
 
 export interface Message {
@@ -30,6 +31,11 @@ export interface ServerToClientEvents {
   "user:status": (user: User) => void;
   "room:join": (room: ChatRoom) => void;
   "room:leave": (roomId: string) => void;
+  "room:list": (rooms: ChatRoom[]) => void;
+  "room:created": (room: ChatRoom) => void;
+  "room:updated": (room: ChatRoom) => void;
+  "room:deleted": (roomId: string) => void;
+  "room:messages": (messages: Message[]) => void;
   "typing:start": (data: { userId: string; roomId: string }) => void;
   "typing:stop": (data: { userId: string; roomId: string }) => void;
 }
@@ -40,8 +46,10 @@ export interface ClientToServerEvents {
   ) => void;
   "message:update": (messageId: string, content: string) => void;
   "message:delete": (messageId: string) => void;
+  "room:create": (room: { name: string; description?: string }) => void;
   "room:join": (roomId: string) => void;
   "room:leave": (roomId: string) => void;
+  "room:search": (query: string) => void;
   "typing:start": (roomId: string) => void;
   "typing:stop": (roomId: string) => void;
 }
