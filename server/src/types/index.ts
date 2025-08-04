@@ -30,6 +30,7 @@ export interface ServerToClientEvents {
   "user:status": (user: User) => void;
   "room:join": (room: ChatRoom) => void;
   "room:leave": (roomId: string) => void;
+  "room:messages": (messages: Message[]) => void;
   "typing:start": (data: { userId: string; roomId: string }) => void;
   "typing:stop": (data: { userId: string; roomId: string }) => void;
 }
