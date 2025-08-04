@@ -1,3 +1,7 @@
+"use client";
+
+import { Providers } from "./providers";
+
 export default function Template({ children }: { children: React.ReactNode }) {
-  return <div className="min-h-screen bg-gray-50">{children}</div>;
+  return <Providers>{children}</Providers>;
 }

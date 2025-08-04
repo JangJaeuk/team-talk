@@ -1,95 +1,55 @@
 "use client";
 
-import { getSocket } from "@/lib/socket";
+import { connectSocket, getSocket } from "@/lib/socket";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useChatStore } from "@/store/useChatStore";
 import { useCallback, useEffect } from "react";
 
-export const useSocket = (roomId: string) => {
-  const { addMessage, updateMessage, deleteMessage, setTypingStatus } =
-    useChatStore();
+export function useSocket(roomId: string) {
+  const { addMessage } = useChatStore();
   const { user } = useAuthStore();
 
   useEffect(() => {
-    if (!user || !roomId) return;
+    try {
+      // 먼저 소켓 연결 초기화
+      connectSocket(roomId);
 
-    const socket = getSocket(roomId);
+      // 그 다음 소켓 인스턴스 가져오기
+      const socket = getSocket(roomId);
 
-    // 새 메시지 수신
-    socket.on("message:new", (message) => {
-      console.log("Received new message:", message);
-      addMessage(message);
-    });
+      // 메시지 수신 이벤트 리스너
+      socket.on("message:new", (message) => {
+        console.log("Received new message:", message);
+        addMessage(message);
+      });
 
-    // 메시지 업데이트
-    socket.on("message:update", (message) => {
-      console.log("Message updated:", message);
-      updateMessage(message.id, message.content);
-    });
-
-    // 메시지 삭제
-    socket.on("message:delete", (messageId) => {
-      console.log("Message deleted:", messageId);
-      deleteMessage(messageId);
-    });
-
-    // 타이핑 상태
-    socket.on("typing:start", ({ userId, roomId }) => {
-      console.log("User started typing:", userId, "in room:", roomId);
-      setTypingStatus(userId, true);
-    });
-
-    socket.on("typing:stop", ({ userId, roomId }) => {
-      console.log("User stopped typing:", userId, "in room:", roomId);
-      setTypingStatus(userId, false);
-    });
-
-    return () => {
-      socket.off("message:new");
-      socket.off("message:update");
-      socket.off("message:delete");
-      socket.off("typing:start");
-      socket.off("typing:stop");
-    };
-  }, [user, roomId, addMessage, updateMessage, deleteMessage, setTypingStatus]);
+      return () => {
+        if (socket.connected) {
+          socket.off("message:new");
+        }
+      };
+    } catch (error) {
+      console.error("Error setting up socket in useSocket:", error);
+    }
+  }, [roomId, addMessage]);
 
   const sendMessage = useCallback(
     (content: string) => {
-      if (!user || !roomId) return;
+      if (!user) return;
 
-      const socket = getSocket(roomId);
-      if (!socket.connected) {
-        console.warn("Socket is not connected. Attempting to reconnect...");
-        socket.connect();
-        return;
+      try {
+        const socket = getSocket(roomId);
+        socket.emit("message:send", {
+          content,
+          roomId,
+          sender: user,
+        });
+      } catch (error) {
+        console.error("Error sending message:", error);
       }
-
-      const messageData = {
-        content,
-        roomId,
-        sender: user,
-      };
-
-      console.log("Sending message:", messageData);
-      socket.emit("message:send", messageData);
     },
-    [user, roomId]
+    [roomId, user]
   );
 
-  const sendTypingStatus = useCallback(
-    (isTyping: boolean) => {
-      if (!user || !roomId) return;
-
-      const socket = getSocket(roomId);
-      if (!socket.connected) return;
-
-      socket.emit(isTyping ? "typing:start" : "typing:stop", roomId);
-    },
-    [user, roomId]
-  );
-
-  return {
-    sendMessage,
-    sendTypingStatus,
-  };
-};
+  return { sendMessage };
+}

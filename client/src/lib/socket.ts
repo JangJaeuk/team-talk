@@ -4,63 +4,62 @@ import { io, Socket } from "socket.io-client";
 const SOCKET_URL =
   process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:4000";
 
-// 방별 소켓 연결을 관리하는 Map
-const socketConnections = new Map<
+// 소켓 인스턴스 저장
+const socketMap = new Map<
   string,
   Socket<ServerToClientEvents, ClientToServerEvents>
 >();
 
-export const getSocket = (
-  roomId: string
-): Socket<ServerToClientEvents, ClientToServerEvents> => {
-  if (!socketConnections.has(roomId)) {
-    const socket = io(SOCKET_URL, {
-      autoConnect: false,
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-    });
-
-    // 디버깅을 위한 이벤트 리스너
-    socket.on("connect", () => {
-      console.log(`Socket connected for room ${roomId} with ID:`, socket.id);
-    });
-
-    socket.on("disconnect", () => {
-      console.log(`Socket disconnected for room ${roomId}`);
-    });
-
-    socket.on("connect_error", (error) => {
-      console.error(`Socket connection error for room ${roomId}:`, error);
-    });
-
-    socketConnections.set(roomId, socket);
-  }
-
-  return socketConnections.get(roomId)!;
-};
-
+// 소켓 연결
 export const connectSocket = (roomId: string) => {
-  const socket = getSocket(roomId);
-  if (!socket.connected) {
-    console.log(`Attempting to connect socket for room ${roomId}...`);
-    socket.connect();
+  if (socketMap.has(roomId)) {
+    return;
   }
+
+  const token = localStorage.getItem("token");
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const socket = io(SOCKET_URL, {
+    auth: {
+      token,
+    },
+  });
+
+  socket.on("connect_error", (error) => {
+    console.error("Socket connection error:", error);
+    if (error.message === "Authentication error") {
+      // 인증 에러 시 로그인 페이지로 이동
+      window.location.href = "/";
+    }
+  });
+
+  socketMap.set(roomId, socket);
 };
 
+// 소켓 연결 해제
 export const disconnectSocket = (roomId: string) => {
-  const socket = socketConnections.get(roomId);
+  const socket = socketMap.get(roomId);
   if (socket) {
-    console.log(`Disconnecting socket for room ${roomId}...`);
     socket.disconnect();
-    socketConnections.delete(roomId);
+    socketMap.delete(roomId);
   }
 };
 
+// 모든 소켓 연결 해제
 export const disconnectAllSockets = () => {
-  socketConnections.forEach((socket, roomId) => {
-    console.log(`Disconnecting socket for room ${roomId}...`);
+  socketMap.forEach((socket) => {
     socket.disconnect();
   });
-  socketConnections.clear();
+  socketMap.clear();
+};
+
+// 소켓 가져오기
+export const getSocket = (roomId: string) => {
+  const socket = socketMap.get(roomId);
+  if (!socket) {
+    throw new Error("Socket not connected");
+  }
+  return socket;
 };

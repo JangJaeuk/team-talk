@@ -5,7 +5,7 @@ import { connectSocket, disconnectSocket, getSocket } from "@/lib/socket";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useChatStore } from "@/store/useChatStore";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function ChatRoomPage() {
   const params = useParams();
@@ -17,30 +17,15 @@ export default function ChatRoomPage() {
   const { messages, clearMessages } = useChatStore();
   const { sendMessage } = useSocket(roomId);
 
-  // cleanup 함수를 useCallback으로 메모이제이션
-  const cleanup = useCallback(() => {
-    const socket = getSocket(roomId);
-    if (socket.connected) {
-      socket.emit("room:leave", roomId);
-    }
-    socket.off("connect");
-    socket.off("disconnect");
-    socket.off("connect_error");
-    clearMessages();
-    disconnectSocket(roomId);
-  }, [roomId, clearMessages]);
-
   useEffect(() => {
-    if (!user) {
-      router.push("/");
-      return;
-    }
-
     // Socket.IO 연결 설정
     const setupSocket = async () => {
       try {
-        const socket = getSocket(roomId);
+        // 먼저 소켓 연결 초기화
         connectSocket(roomId);
+
+        // 그 다음 소켓 인스턴스 가져오기
+        const socket = getSocket(roomId);
 
         // 연결 상태 모니터링
         socket.on("connect", () => {
@@ -67,12 +52,27 @@ export default function ChatRoomPage() {
 
     setupSocket();
 
-    // cleanup 함수 반환
-    return cleanup;
-  }, [user, roomId, router, cleanup]); // clearMessages 제거, cleanup 추가
+    // Cleanup
+    return () => {
+      try {
+        const socket = getSocket(roomId);
+        if (socket.connected) {
+          socket.emit("room:leave", roomId);
+          socket.off("connect");
+          socket.off("disconnect");
+          socket.off("connect_error");
+        }
+        clearMessages();
+        disconnectSocket(roomId);
+      } catch (error) {
+        console.error("Error cleaning up socket:", error);
+      }
+    };
+  }, [roomId, clearMessages]);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (message.trim() && user && isConnected) {
       console.log("Attempting to send message:", message);
       sendMessage(message.trim());
@@ -82,7 +82,9 @@ export default function ChatRoomPage() {
     }
   };
 
-  if (!user) return null;
+  const handleLeaveRoom = () => {
+    router.push("/rooms");
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -102,10 +104,7 @@ export default function ChatRoomPage() {
                 {isConnected ? " 연결됨" : " 연결 안됨"}
               </span>
               <button
-                onClick={() => {
-                  cleanup();
-                  router.push("/rooms");
-                }}
+                onClick={handleLeaveRoom}
                 className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
               >
                 나가기
@@ -118,7 +117,7 @@ export default function ChatRoomPage() {
               <div
                 key={msg.id || index}
                 className={`mb-2 ${
-                  msg.sender.id === user.id ? "text-right" : "text-left"
+                  msg.sender.id === user?.id ? "text-right" : "text-left"
                 }`}
               >
                 <span className="text-sm text-gray-500">

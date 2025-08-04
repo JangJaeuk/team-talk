@@ -1,11 +1,9 @@
 "use client";
 
+import api from "@/lib/axios"; // 커스텀 axios 인스턴스 사용
 import { connectSocket, getSocket } from "@/lib/socket";
 import { ChatRoom } from "@/types";
-import axios from "axios";
 import { useEffect, useState } from "react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
 interface RoomListProps {
   onJoinRoom: (roomId: string) => void;
@@ -23,7 +21,7 @@ export function RoomList({ onJoinRoom }: RoomListProps) {
   const fetchRooms = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`${API_URL}/rooms`);
+      const response = await api.get("/rooms"); // 커스텀 axios 인스턴스 사용
       setRooms(response.data);
     } catch (error) {
       console.error("Failed to fetch rooms:", error);
@@ -36,18 +34,22 @@ export function RoomList({ onJoinRoom }: RoomListProps) {
     fetchRooms();
 
     // Socket.IO 연결 설정
-    const socket = getSocket("lobby");
-    connectSocket("lobby");
+    try {
+      connectSocket("lobby");
+      const socket = getSocket("lobby");
 
-    // 방 목록 업데이트 구독
-    socket.on("room:list", (updatedRooms) => {
-      console.log("Received updated room list:", updatedRooms);
-      setRooms(updatedRooms);
-    });
+      // 방 목록 업데이트 구독
+      socket.on("room:list", (updatedRooms) => {
+        console.log("Received updated room list:", updatedRooms);
+        setRooms(updatedRooms);
+      });
 
-    return () => {
-      socket.off("room:list");
-    };
+      return () => {
+        socket.off("room:list");
+      };
+    } catch (error) {
+      console.error("Socket connection error:", error);
+    }
   }, []);
 
   // 방 검색
@@ -62,7 +64,8 @@ export function RoomList({ onJoinRoom }: RoomListProps) {
     if (!newRoomName.trim()) return;
 
     try {
-      const response = await axios.post(`${API_URL}/rooms`, {
+      const response = await api.post("/rooms", {
+        // 커스텀 axios 인스턴스 사용
         name: newRoomName.trim(),
         description: newRoomDescription.trim() || undefined,
       });
