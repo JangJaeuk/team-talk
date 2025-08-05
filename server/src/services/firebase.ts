@@ -81,8 +81,8 @@ export const roomService = {
     );
 
     return {
+      ...(doc.data() as unknown as ChatRoom),
       id: doc.id,
-      ...doc.data(),
       participants,
     } as ChatRoom;
   },

@@ -2,14 +2,14 @@
 
 import api from "@/lib/axios"; // 커스텀 axios 인스턴스 사용
 import { ChatRoom, Message } from "@/types";
-import { useEffect, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
-interface RoomListProps {
+interface Props {
   onJoinRoom: (roomId: string) => void;
 }
 
-export function RoomList({ onJoinRoom }: RoomListProps) {
+const ChatRoomList: FC<Props> = ({ onJoinRoom }) => {
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -196,4 +196,6 @@ export function RoomList({ onJoinRoom }: RoomListProps) {
       )}
     </div>
   );
-}
+};
+
+export default ChatRoomList;

@@ -1,17 +1,12 @@
 "use client";
 
 import { useAuthStore } from "@/store/useAuthStore";
-import { useChatStore } from "@/store/useChatStore";
-import { ChatRoom } from "@/types";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { RoomList } from "./RoomList";
+import { FC } from "react";
+import ChatRoomList from "./ChatRoomList";
 
-export function Chat() {
-  const [isConnected, setIsConnected] = useState(false);
-  const [currentRoom, setCurrentRoom] = useState<ChatRoom | null>(null);
+const ChatRoomListMain: FC = () => {
   const { user, logout } = useAuthStore();
-  const { messages, clearMessages } = useChatStore();
   const router = useRouter();
 
   const handleJoinRoom = (roomId: string) => {
@@ -36,8 +31,10 @@ export function Chat() {
             </button>
           </div>
         </div>
-        <RoomList onJoinRoom={handleJoinRoom} />
+        <ChatRoomList onJoinRoom={handleJoinRoom} />
       </div>
     </div>
   );
-}
+};
+
+export default ChatRoomListMain;
