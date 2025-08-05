@@ -13,6 +13,7 @@ export interface ChatRoom {
   createdAt: Date;
   participantCount: number;
   lastMessage?: Message | null;
+  participants: User[];
 }
 
 export interface Message {

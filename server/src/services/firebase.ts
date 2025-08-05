@@ -66,9 +66,24 @@ export const roomService = {
       return null;
     }
 
+    // 현재 활성 사용자 목록 가져오기
+    const usersSnapshot = await db
+      .collection("users")
+      .where("isOnline", "==", true)
+      .get();
+
+    const participants = usersSnapshot.docs.map(
+      (doc) =>
+        ({
+          id: doc.id,
+          ...doc.data(),
+        } as User)
+    );
+
     return {
       id: doc.id,
       ...doc.data(),
+      participants,
     } as ChatRoom;
   },
 

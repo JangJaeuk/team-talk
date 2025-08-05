@@ -47,8 +47,8 @@ export interface ServerToClientEvents {
   "room:leave": (roomId: string) => void;
   "room:list": (rooms: ChatRoom[]) => void;
   "room:messages": (messages: Message[]) => void;
-  "typing:start": (userId: string) => void;
-  "typing:stop": (userId: string) => void;
+  "typing:start": (data: { userId: string; roomId: string }) => void;
+  "typing:stop": (data: { userId: string; roomId: string }) => void;
 }
 
 export interface ClientToServerEvents {

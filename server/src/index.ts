@@ -285,6 +285,22 @@ io.on("connection", (socket) => {
     }
   });
 
+  // 타이핑 시작
+  socket.on("typing:start", (roomId) => {
+    io.to(roomId).emit("typing:start", {
+      userId: socket.data.user.uid,
+      roomId,
+    });
+  });
+
+  // 타이핑 종료
+  socket.on("typing:stop", (roomId) => {
+    io.to(roomId).emit("typing:stop", {
+      userId: socket.data.user.uid,
+      roomId,
+    });
+  });
+
   // 연결 끊김 처리
   socket.on("disconnect", async () => {
     console.log("Client disconnected");

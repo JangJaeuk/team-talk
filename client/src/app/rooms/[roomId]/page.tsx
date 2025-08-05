@@ -3,6 +3,7 @@
 import { useSocket } from "@/hooks/useSocket";
 import api from "@/lib/axios";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useChatStore } from "@/store/useChatStore";
 import { ChatRoom, Message } from "@/types";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -11,6 +12,7 @@ import { useInView } from "react-intersection-observer";
 export default function ChatRoomPage() {
   const { roomId } = useParams();
   const { user } = useAuthStore();
+  const { typingUsers } = useChatStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -18,6 +20,7 @@ export default function ChatRoomPage() {
   const messageEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [newMessage, setNewMessage] = useState("");
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
   const { ref: loadMoreRef, inView } = useInView({
     threshold: 0,
@@ -105,7 +108,7 @@ export default function ChatRoomPage() {
     [user?.id]
   );
 
-  const { sendMessage } = useSocket(roomId as string, {
+  const { sendMessage, sendTypingStatus } = useSocket(roomId as string, {
     onMessage: handleNewMessage,
   });
 
@@ -140,11 +143,77 @@ export default function ChatRoomPage() {
     setNewMessage("");
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setNewMessage(value);
+
+    // 타이핑 상태 전송
+    if (value.length > 0) {
+      sendTypingStatus(true);
+
+      // 이전 타이머 취소
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
+      // 3초 후에 타이핑 상태 해제
+      typingTimeoutRef.current = setTimeout(() => {
+        sendTypingStatus(false);
+      }, 3000);
+    } else {
+      sendTypingStatus(false);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    }
+  };
+
+  // 컴포넌트 언마운트 시 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const formatTimestamp = (timestamp: Message["createdAt"]) => {
     const date = new Date(
       timestamp._seconds * 1000 + timestamp._nanoseconds / 1000000
     );
     return date.toLocaleString();
+  };
+
+  // 타이핑 중인 사용자의 닉네임 찾기
+  const getTypingUserNickname = (userId: string) => {
+    // messages 배열에서 해당 사용자의 가장 최근 메시지 찾기
+    const userMessage = messages.find((msg) => msg.sender.id === userId);
+    return userMessage?.sender.nickname || "누군가";
+  };
+
+  // 타이핑 중인 사용자들의 메시지 생성
+  const getTypingMessage = () => {
+    const typingUserIds = Object.entries(typingUsers)
+      .filter(([userId, isTyping]) => isTyping && userId !== user?.id)
+      .map(([userId]) => userId);
+
+    if (typingUserIds.length === 0) return null;
+
+    const nicknames = typingUserIds.map(getTypingUserNickname);
+
+    if (nicknames.length === 1) {
+      return (
+        <div key="typing-indicator" className="text-gray-500 text-sm mb-2">
+          {nicknames[0]}님이 입력하고 있습니다...
+        </div>
+      );
+    }
+
+    return (
+      <div key="typing-indicator" className="text-gray-500 text-sm mb-2">
+        {nicknames[0]}님 외 {nicknames.length - 1}명이 입력하고 있습니다...
+      </div>
+    );
   };
 
   return (
@@ -185,6 +254,9 @@ export default function ChatRoomPage() {
         ref={chatContainerRef}
         className="flex-1 overflow-y-auto flex flex-col-reverse p-4"
       >
+        {/* 타이핑 표시기 */}
+        {getTypingMessage()}
+
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -222,7 +294,7 @@ export default function ChatRoomPage() {
           <input
             type="text"
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={handleInputChange}
             placeholder="메시지를 입력하세요..."
             className="flex-1 p-2 border rounded"
           />
