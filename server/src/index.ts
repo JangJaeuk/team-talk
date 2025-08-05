@@ -179,8 +179,6 @@ io.on("connection", (socket) => {
     socket.join(roomId);
     currentRoomId = roomId;
 
-    console.log("이거 봐봐", roomId);
-
     try {
       // 참여자 수 증가
       await roomService.updateParticipantCount(roomId, 1);
@@ -248,6 +246,12 @@ io.on("connection", (socket) => {
 
       // 해당 방에 새 메시지 전송
       io.to(message.roomId).emit("message:new", message);
+
+      // 해당 방에 타이핑 종료
+      io.to(message.roomId).emit("typing:stop", {
+        userId: socket.data.user.uid,
+        roomId: message.roomId,
+      });
 
       // 방 목록 갱신을 위해 최신 방 목록을 모든 클라이언트에게 전송
       const updatedRooms = await roomService.getRooms();
