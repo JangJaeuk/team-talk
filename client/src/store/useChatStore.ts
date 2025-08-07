@@ -47,7 +47,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const currentRoom = get().currentRoom;
     if (!currentRoom) return;
 
-    const socket = getSocket(currentRoom.id);
+    const socket = getSocket();
     socket.emit("message:update", messageId, content);
 
     set((state) => ({
@@ -63,7 +63,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const currentRoom = get().currentRoom;
     if (!currentRoom) return;
 
-    const socket = getSocket(currentRoom.id);
+    const socket = getSocket();
     socket.emit("message:delete", messageId);
 
     set((state) => ({

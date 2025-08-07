@@ -108,6 +108,7 @@ app.post("/api/rooms", authMiddleware, async (req, res) => {
       name,
       description,
       createdBy: req.user!.uid,
+      participants: [req.user!.uid],
     });
 
     const rooms = await roomService.getRooms();
@@ -167,25 +168,66 @@ io.on("connection", (socket) => {
   // 사용자 온라인 상태 업데이트
   userService.updateUserStatus(socket.data.user.uid, true);
 
-  // 방 참여
-  socket.on("room:join", async (roomId) => {
-    console.log(`Client ${socket.id} joining room ${roomId}`);
+  // 방 입장
+  socket.on("room:enter", async (roomId) => {
+    console.log(`Client ${socket.id} entering room ${roomId}`);
 
     // 이전 방에서 나가기
     if (currentRoomId) {
-      await handleLeaveRoom(currentRoomId);
+      await handleExitRoom(currentRoomId);
     }
 
     socket.join(roomId);
     currentRoomId = roomId;
 
     try {
-      // 참여자 수 증가
-      await roomService.updateParticipantCount(roomId, 1);
-
       // 방 메시지 목록 전송
       const messages = await messageService.getMessagesByRoom(roomId);
       socket.emit("room:messages", messages);
+
+      // 업데이트된 방 목록 브로드캐스트
+      const rooms = await roomService.getRooms();
+      io.emit("room:list", rooms);
+    } catch (error) {
+      console.error("Error handling room enter:", error);
+    }
+  });
+
+  // 방 퇴장 처리 함수
+  const handleExitRoom = async (roomId: string) => {
+    console.log(`Client ${socket.id} exiting room ${roomId}`);
+    socket.leave(roomId);
+
+    try {
+      // 업데이트된 방 목록 브로드캐스트
+      const rooms = await roomService.getRooms();
+      io.emit("room:list", rooms);
+    } catch (error) {
+      console.error("Error handling room exit:", error);
+    }
+  };
+
+  // 방 퇴장 이벤트
+  socket.on("room:exit", async (roomId) => {
+    await handleExitRoom(roomId);
+    currentRoomId = null;
+  });
+
+  // 방 가입 이벤트
+  socket.on("room:join", async (roomId) => {
+    if (!socket.data.user) {
+      console.error("Unauthorized user tried to join room");
+      return;
+    }
+
+    try {
+      const room = await roomService.joinRoom(roomId, socket.data.user.uid);
+
+      // 가입 성공 이벤트 전송
+      socket.emit("room:join:success", room);
+
+      // 참여자 목록 업데이트 브로드캐스트
+      io.to(roomId).emit("room:participant:update", roomId, room.participants);
 
       // 업데이트된 방 목록 브로드캐스트
       const rooms = await roomService.getRooms();
@@ -195,14 +237,27 @@ io.on("connection", (socket) => {
     }
   });
 
-  // 방 나가기 처리 함수
-  const handleLeaveRoom = async (roomId: string) => {
-    console.log(`Client ${socket.id} leaving room ${roomId}`);
-    socket.leave(roomId);
+  // 방 탈퇴 이벤트
+  socket.on("room:leave", async (roomId) => {
+    if (!socket.data.user) {
+      console.error("Unauthorized user tried to leave room");
+      return;
+    }
 
     try {
-      // 참여자 수 감소
-      await roomService.updateParticipantCount(roomId, -1);
+      const room = await roomService.leaveRoom(roomId, socket.data.user.uid);
+
+      // 탈퇴 성공 이벤트 전송
+      socket.emit("room:leave:success", roomId);
+
+      // 현재 해당 방에 있다면 방에서 나가기
+      if (currentRoomId === roomId) {
+        await handleExitRoom(roomId);
+        currentRoomId = null;
+      }
+
+      // 참여자 목록 업데이트 브로드캐스트
+      io.to(roomId).emit("room:participant:update", roomId, room.participants);
 
       // 업데이트된 방 목록 브로드캐스트
       const rooms = await roomService.getRooms();
@@ -210,12 +265,6 @@ io.on("connection", (socket) => {
     } catch (error) {
       console.error("Error handling room leave:", error);
     }
-  };
-
-  // 방 나가기 이벤트
-  socket.on("room:leave", async (roomId) => {
-    await handleLeaveRoom(roomId);
-    currentRoomId = null;
   });
 
   // 메시지 전송
@@ -309,7 +358,7 @@ io.on("connection", (socket) => {
   socket.on("disconnect", async () => {
     console.log("Client disconnected");
     if (currentRoomId) {
-      await handleLeaveRoom(currentRoomId);
+      await handleExitRoom(currentRoomId);
     }
     // 사용자 오프라인 상태 업데이트
     await userService.updateUserStatus(socket.data.user.uid, false);

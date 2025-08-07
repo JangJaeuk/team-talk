@@ -1,17 +1,13 @@
-import * as admin from "firebase-admin";
 import { db } from "../config/firebase";
 import { ChatRoom, Message, User } from "../types";
 
 // 채팅방 관련 서비스
 export const roomService = {
   // 채팅방 생성
-  async createRoom(
-    room: Omit<ChatRoom, "id" | "createdAt" | "participantCount">
-  ): Promise<string> {
+  async createRoom(room: Omit<ChatRoom, "id" | "createdAt">): Promise<string> {
     const docRef = await db.collection("rooms").add({
       ...room,
       createdAt: new Date(),
-      participantCount: 0,
     });
     return docRef.id;
   },
@@ -66,46 +62,82 @@ export const roomService = {
       return null;
     }
 
-    // 현재 활성 사용자 목록 가져오기
-    const usersSnapshot = await db
-      .collection("users")
-      .where("isOnline", "==", true)
-      .get();
-
-    const participants = usersSnapshot.docs.map(
-      (doc) =>
-        ({
-          id: doc.id,
-          ...doc.data(),
-        } as User)
-    );
+    const data = doc.data() as unknown as ChatRoom;
 
     return {
-      ...(doc.data() as unknown as ChatRoom),
+      ...data,
       id: doc.id,
-      participants,
+      participants: data.participants || [], // 방의 실제 참여자 목록 사용
     } as ChatRoom;
-  },
-
-  // 채팅방 참여자 수 업데이트
-  async updateParticipantCount(roomId: string, delta: number): Promise<void> {
-    const roomRef = db.collection("rooms").doc(roomId);
-
-    // 방이 존재하는지 먼저 확인
-    const roomDoc = await roomRef.get();
-    if (!roomDoc.exists) {
-      console.log(`Room ${roomId} does not exist`);
-      return; // 방이 없으면 조용히 리턴
-    }
-
-    await roomRef.update({
-      participantCount: admin.firestore.FieldValue.increment(delta),
-    });
   },
 
   // 채팅방 삭제
   async deleteRoom(roomId: string): Promise<void> {
     await db.collection("rooms").doc(roomId).delete();
+  },
+
+  // 채팅방 참여
+  async joinRoom(roomId: string, userId: string): Promise<ChatRoom> {
+    const roomRef = db.collection("rooms").doc(roomId);
+
+    await db.runTransaction(async (transaction) => {
+      const room = await transaction.get(roomRef);
+      if (!room.exists) {
+        throw new Error("Room not found");
+      }
+
+      const data = room.data();
+      if (!data) {
+        throw new Error("Room data not found");
+      }
+
+      if (data.participants.includes(userId)) {
+        throw new Error("User already joined this room");
+      }
+
+      transaction.update(roomRef, {
+        participants: [...data.participants, userId],
+      });
+    });
+
+    // 업데이트된 방 정보 반환
+    const updatedRoom = await this.getRoom(roomId);
+    if (!updatedRoom) {
+      throw new Error("Failed to get updated room");
+    }
+    return updatedRoom;
+  },
+
+  // 채팅방 나가기
+  async leaveRoom(roomId: string, userId: string): Promise<ChatRoom> {
+    const roomRef = db.collection("rooms").doc(roomId);
+
+    await db.runTransaction(async (transaction) => {
+      const room = await transaction.get(roomRef);
+      if (!room.exists) {
+        throw new Error("Room not found");
+      }
+
+      const data = room.data();
+      if (!data) {
+        throw new Error("Room data not found");
+      }
+
+      if (!data.participants.includes(userId)) {
+        throw new Error("User is not in this room");
+      }
+
+      transaction.update(roomRef, {
+        participants: data.participants.filter((id: string) => id !== userId),
+      });
+    });
+
+    // 업데이트된 방 정보 반환
+    const updatedRoom = await this.getRoom(roomId);
+    if (!updatedRoom) {
+      throw new Error("Failed to get updated room");
+    }
+    return updatedRoom;
   },
 };
 

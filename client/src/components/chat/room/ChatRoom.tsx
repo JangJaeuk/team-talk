@@ -2,6 +2,7 @@
 
 import { useSocket } from "@/hooks/useSocket";
 import api from "@/lib/axios";
+import { getSocket } from "@/lib/socket";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useChatStore } from "@/store/useChatStore";
 import type { ChatRoom as ChatRoomType, Message } from "@/types";
@@ -31,6 +32,24 @@ const ChatRoom: FC<Props> = ({ roomId }) => {
   });
   const prevInViewRef = useRef(inView);
 
+  // 방 가입 여부 확인
+  const isJoined = room?.participants.includes(user?.id || "");
+
+  // 방 가입
+  const handleJoinRoom = () => {
+    if (!user) return;
+    const socket = getSocket();
+    socket.emit("room:join", roomId);
+  };
+
+  // 방 탈퇴
+  const handleLeaveRoom = () => {
+    if (!user) return;
+    const socket = getSocket();
+    socket.emit("room:leave", roomId);
+    router.push("/rooms"); // 방 목록으로 이동
+  };
+
   // 채팅방 정보 가져오기
   const fetchRoomInfo = async () => {
     try {
@@ -40,10 +59,6 @@ const ChatRoom: FC<Props> = ({ roomId }) => {
       console.error("Error fetching room info:", error);
     }
   };
-
-  useEffect(() => {
-    fetchRoomInfo();
-  }, [roomId]);
 
   const isScrolledToBottom = () => {
     const container = chatContainerRef.current;
@@ -111,8 +126,14 @@ const ChatRoom: FC<Props> = ({ roomId }) => {
     [user?.id]
   );
 
+  useEffect(() => {
+    fetchRoomInfo();
+  }, [roomId]);
+
   const { sendMessage, sendTypingStatus } = useSocket(roomId, {
     onMessage: handleNewMessage,
+    onRoomJoinSuccess: (updatedRoom) => setRoom(updatedRoom),
+    onRoomLeaveSuccess: () => router.push("/rooms"),
   });
 
   // 초기 메시지 로드
@@ -222,93 +243,130 @@ const ChatRoom: FC<Props> = ({ roomId }) => {
   return (
     <div className="flex flex-col h-screen">
       {/* 채팅방 헤더 */}
-      <div className="bg-white border-b p-4 flex items-center gap-4 shadow-sm">
-        <button
-          onClick={() => router.push("/rooms")}
-          className="text-gray-600 hover:text-gray-800"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-6 h-6"
+      <div className="bg-white border-b p-4 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.push("/rooms")}
+            className="text-gray-600 hover:text-gray-800"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
-            />
-          </svg>
-        </button>
-        <div>
-          <h1 className="text-lg font-semibold">
-            {room?.name || "로딩 중..."}
-          </h1>
-          {room?.description && (
-            <p className="text-sm text-gray-500">{room.description}</p>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-6 h-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+              />
+            </svg>
+          </button>
+          <div>
+            <h1 className="text-lg font-semibold">
+              {room?.name || "로딩 중..."}
+            </h1>
+            {room?.description && (
+              <p className="text-sm text-gray-500">{room.description}</p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {isJoined ? (
+            <button
+              onClick={handleLeaveRoom}
+              className="px-4 py-2 text-red-500 hover:text-red-600 border border-red-500 rounded"
+            >
+              방 탈퇴
+            </button>
+          ) : (
+            <button
+              onClick={handleJoinRoom}
+              className="px-4 py-2 text-blue-500 hover:text-blue-600 border border-blue-500 rounded"
+            >
+              방 가입
+            </button>
           )}
         </div>
       </div>
 
       {/* 채팅 영역 */}
-      <div
-        ref={chatContainerRef}
-        className="flex-1 overflow-y-auto flex flex-col-reverse p-4"
-      >
-        {/* 타이핑 표시기 */}
-        {getTypingMessage()}
-
-        {messages.map((msg) => (
+      {isJoined ? (
+        <>
           <div
-            key={msg.id}
-            className={`mb-2 ${
-              msg.sender.id === user?.id ? "text-right" : "text-left"
-            }`}
+            ref={chatContainerRef}
+            className="flex-1 overflow-y-auto flex flex-col-reverse p-4"
           >
-            <div
-              className={`inline-block p-2 rounded-lg ${
-                msg.sender.id === user?.id
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200"
-              }`}
-            >
-              <div className="font-bold text-sm">{msg.sender.nickname}</div>
-              <div>{msg.content}</div>
-              <div className="text-xs opacity-75">
-                {formatTimestamp(msg.createdAt)}
+            {/* 타이핑 표시기 */}
+            {getTypingMessage()}
+
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`mb-2 ${
+                  msg.sender.id === user?.id ? "text-right" : "text-left"
+                }`}
+              >
+                <div
+                  className={`inline-block p-2 rounded-lg ${
+                    msg.sender.id === user?.id
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-200"
+                  }`}
+                >
+                  <div className="font-bold text-sm">{msg.sender.nickname}</div>
+                  <div>{msg.content}</div>
+                  <div className="text-xs opacity-75">
+                    {formatTimestamp(msg.createdAt)}
+                  </div>
+                </div>
               </div>
+            ))}
+
+            {hasMore && (
+              <div ref={loadMoreRef} className="text-center py-4">
+                {isLoading ? "메시지 불러오는 중..." : "이전 메시지 불러오기"}
+              </div>
+            )}
+
+            <div ref={messageEndRef} />
+          </div>
+
+          <form onSubmit={handleSubmit} className="p-4 border-t">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={handleInputChange}
+                placeholder="메시지를 입력하세요..."
+                className="flex-1 p-2 border rounded"
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                전송
+              </button>
             </div>
+          </form>
+        </>
+      ) : (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-gray-600 mb-4">
+              이 채팅방에 참여하려면 먼저 가입해주세요.
+            </p>
+            <button
+              onClick={handleJoinRoom}
+              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            >
+              방 가입하기
+            </button>
           </div>
-        ))}
-
-        {hasMore && (
-          <div ref={loadMoreRef} className="text-center py-4">
-            {isLoading ? "메시지 불러오는 중..." : "이전 메시지 불러오기"}
-          </div>
-        )}
-
-        <div ref={messageEndRef} />
-      </div>
-
-      <form onSubmit={handleSubmit} className="p-4 border-t">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={handleInputChange}
-            placeholder="메시지를 입력하세요..."
-            className="flex-1 p-2 border rounded"
-          />
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            전송
-          </button>
         </div>
-      </form>
+      )}
     </div>
   );
 };

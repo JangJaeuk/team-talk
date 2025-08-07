@@ -1,9 +1,10 @@
 "use client";
 
-import api from "@/lib/axios"; // 커스텀 axios 인스턴스 사용
+import api from "@/lib/axios";
+import { getSocket } from "@/lib/socket"; // 소켓 유틸리티 사용
+import { useAuthStore } from "@/store/useAuthStore"; // named import로 수정
 import { ChatRoom, Message } from "@/types";
 import { FC, useEffect, useState } from "react";
-import { io } from "socket.io-client";
 
 interface Props {
   onJoinRoom: (roomId: string) => void;
@@ -16,12 +17,13 @@ const ChatRoomList: FC<Props> = ({ onJoinRoom }) => {
   const [newRoomName, setNewRoomName] = useState("");
   const [newRoomDescription, setNewRoomDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuthStore(); // 현재 사용자 정보
 
   // 방 목록 조회
   const fetchRooms = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get("/rooms"); // 커스텀 axios 인스턴스 사용
+      const response = await api.get("/rooms");
       setRooms(response.data);
     } catch (error) {
       console.error("Failed to fetch rooms:", error);
@@ -35,14 +37,7 @@ const ChatRoomList: FC<Props> = ({ onJoinRoom }) => {
 
     // Socket.IO 연결 설정
     try {
-      const socket = io(
-        process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:4000",
-        {
-          auth: {
-            token: localStorage.getItem("token"),
-          },
-        }
-      );
+      const socket = getSocket();
 
       // 방 목록 업데이트 구독
       socket.on("room:list", (updatedRooms) => {
@@ -55,15 +50,27 @@ const ChatRoomList: FC<Props> = ({ onJoinRoom }) => {
         fetchRooms();
       });
 
+      // 방 가입/탈퇴 성공 이벤트 처리
+      socket.on("room:join:success", (room) => {
+        console.log("Successfully joined room:", room);
+        onJoinRoom(room.id); // 가입 후 바로 입장
+      });
+
+      socket.on("room:leave:success", (roomId) => {
+        console.log("Successfully left room:", roomId);
+        fetchRooms(); // 방 목록 갱신
+      });
+
       return () => {
         socket.off("room:list");
         socket.off("message:new");
-        socket.disconnect();
+        socket.off("room:join:success");
+        socket.off("room:leave:success");
       };
     } catch (error) {
       console.error("Socket connection error:", error);
     }
-  }, []);
+  }, [onJoinRoom]);
 
   const formatTimestamp = (timestamp: Message["createdAt"]) => {
     if (!timestamp) return "";
@@ -76,7 +83,6 @@ const ChatRoomList: FC<Props> = ({ onJoinRoom }) => {
   // 방 검색
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    // 실제로는 서버에 검색 요청을 보내야 하지만, 지금은 클라이언트에서 필터링
     fetchRooms();
   };
 
@@ -86,7 +92,6 @@ const ChatRoomList: FC<Props> = ({ onJoinRoom }) => {
 
     try {
       const response = await api.post("/rooms", {
-        // 커스텀 axios 인스턴스 사용
         name: newRoomName.trim(),
         description: newRoomDescription.trim() || undefined,
       });
@@ -94,11 +99,37 @@ const ChatRoomList: FC<Props> = ({ onJoinRoom }) => {
       setNewRoomName("");
       setNewRoomDescription("");
       setShowCreateModal(false);
-      // 방 생성 후 목록 갱신은 socket 이벤트를 통해 자동으로 이루어짐
     } catch (error) {
       console.error("Failed to create room:", error);
     }
   };
+
+  // 방 가입
+  const handleJoinRoom = (roomId: string) => {
+    const socket = getSocket();
+    socket.emit("room:join", roomId);
+  };
+
+  // 방 탈퇴
+  const handleLeaveRoom = (roomId: string) => {
+    const socket = getSocket();
+    socket.emit("room:leave", roomId);
+  };
+
+  // 방 입장
+  const handleEnterRoom = (roomId: string) => {
+    const socket = getSocket();
+    socket.emit("room:enter", roomId);
+    onJoinRoom(roomId);
+  };
+
+  // 가입한 방과 미가입 방 구분
+  const joinedRooms = rooms.filter((room) =>
+    room.participants.includes(user?.id || "")
+  );
+  const notJoinedRooms = rooms.filter(
+    (room) => !room.participants.includes(user?.id || "")
+  );
 
   return (
     <div className="p-4">
@@ -121,41 +152,76 @@ const ChatRoomList: FC<Props> = ({ onJoinRoom }) => {
       {isLoading ? (
         <div className="text-center py-4">로딩 중...</div>
       ) : (
-        <div className="space-y-2">
-          {rooms
-            .filter((room) =>
-              room.name.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-            .map((room) => (
-              <div
-                key={room.id}
-                onClick={() => onJoinRoom(room.id)}
-                className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-lg font-semibold">{room.name}</h3>
-                  <span className="text-sm text-gray-500">
-                    {room.lastMessage &&
-                      formatTimestamp(room.lastMessage.createdAt)}
-                  </span>
-                </div>
-                <p className="text-gray-600 text-sm truncate">
-                  {room.lastMessage ? (
-                    <>
-                      <span className="font-medium">
-                        {room.lastMessage.sender.nickname}:{" "}
-                      </span>
-                      {room.lastMessage.content}
-                    </>
-                  ) : (
-                    "아직 메시지가 없습니다."
-                  )}
-                </p>
-                <div className="mt-2 text-xs text-gray-500">
-                  참여자 {room.participantCount}명
-                </div>
-              </div>
-            ))}
+        <div className="space-y-4">
+          {/* 가입한 방 목록 */}
+          <div>
+            <h2 className="text-lg font-bold mb-2">가입한 채팅방</h2>
+            <div className="space-y-2">
+              {joinedRooms
+                .filter((room) =>
+                  room.name.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map((room) => (
+                  <div
+                    key={room.id}
+                    className="p-4 border rounded-lg hover:bg-gray-50"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-lg font-semibold">{room.name}</h3>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEnterRoom(room.id)}
+                          className="text-blue-500 hover:text-blue-600"
+                        >
+                          입장
+                        </button>
+                        <button
+                          onClick={() => handleLeaveRoom(room.id)}
+                          className="text-red-500 hover:text-red-600"
+                        >
+                          탈퇴
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-gray-600 text-sm">{room.lastMessage?.content}</p>
+                    <div className="mt-2 text-xs text-gray-500">
+                      참여자 {room.participants.length}명
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+
+          {/* 미가입 방 목록 */}
+          <div>
+            <h2 className="text-lg font-bold mb-2">참여 가능한 채팅방</h2>
+            <div className="space-y-2">
+              {notJoinedRooms
+                .filter((room) =>
+                  room.name.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map((room) => (
+                  <div
+                    key={room.id}
+                    className="p-4 border rounded-lg hover:bg-gray-50"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-lg font-semibold">{room.name}</h3>
+                      <button
+                        onClick={() => handleJoinRoom(room.id)}
+                        className="text-blue-500 hover:text-blue-600"
+                      >
+                        가입
+                      </button>
+                    </div>
+                    <p className="text-gray-600 text-sm">{room.description}</p>
+                    <div className="mt-2 text-xs text-gray-500">
+                      참여자 {room.participants.length}명
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
         </div>
       )}
 
