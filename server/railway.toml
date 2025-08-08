@@ -1,10 +1,16 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "yarn install"
+buildCommand = "yarn install && yarn build"
 
 [deploy]
 startCommand = "yarn start"
 healthcheckPath = "/"
-healthcheckTimeout = 100
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 3
+restartPolicyMaxRetries = 10
+
+[deploy.healthcheck]
+path = "/"
+interval = "15s"
+timeout = "10s"
+retries = 5
