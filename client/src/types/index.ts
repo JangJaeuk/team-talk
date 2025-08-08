@@ -26,6 +26,7 @@ export interface Message {
     _nanoseconds: number;
   };
   isEdited: boolean;
+  type?: "normal" | "system";
 }
 
 // Socket.IO 이벤트 타입

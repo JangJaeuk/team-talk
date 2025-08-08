@@ -302,28 +302,38 @@ const ChatRoom: FC<Props> = ({ roomId }) => {
             {/* 타이핑 표시기 */}
             {getTypingMessage()}
 
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`mb-2 ${
-                  msg.sender.id === user?.id ? "text-right" : "text-left"
-                }`}
-              >
-                <div
-                  className={`inline-block p-2 rounded-lg ${
-                    msg.sender.id === user?.id
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200"
-                  }`}
-                >
-                  <div className="font-bold text-sm">{msg.sender.nickname}</div>
-                  <div>{msg.content}</div>
-                  <div className="text-xs opacity-75">
-                    {formatTimestamp(msg.createdAt)}
+            {messages.map((msg) =>
+              msg.type === "system" ? (
+                <div key={msg.id} className="mb-2 text-center">
+                  <div className="inline-block px-4 py-1 rounded-full bg-gray-100 text-gray-600 text-sm">
+                    {msg.content}
                   </div>
                 </div>
-              </div>
-            ))}
+              ) : (
+                <div
+                  key={msg.id}
+                  className={`mb-2 ${
+                    msg.sender.id === user?.id ? "text-right" : "text-left"
+                  }`}
+                >
+                  <div
+                    className={`inline-block p-2 rounded-lg ${
+                      msg.sender.id === user?.id
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-200"
+                    }`}
+                  >
+                    <div className="font-bold text-sm">
+                      {msg.sender.nickname}
+                    </div>
+                    <div>{msg.content}</div>
+                    <div className="text-xs opacity-75">
+                      {formatTimestamp(msg.createdAt)}
+                    </div>
+                  </div>
+                </div>
+              )
+            )}
 
             {hasMore && (
               <div ref={loadMoreRef} className="text-center py-4">

@@ -231,6 +231,31 @@ io.on("connection", (socket) => {
       // 가입 성공 이벤트 전송
       socket.emit("room:join:success", room);
 
+      // 시스템 메시지 생성 및 저장
+      const systemMessageData = {
+        content: `${socket.data.user.nickname}님이 채팅방에 참여하셨습니다.`,
+        sender: {
+          id: socket.data.user.uid,
+          email: socket.data.user.email!,
+          nickname: socket.data.user.nickname,
+          isOnline: true,
+        },
+        roomId,
+        type: "system" as const,
+      };
+
+      const systemMessageId = await messageService.createMessage(
+        systemMessageData
+      );
+      const systemMessage = {
+        id: systemMessageId,
+        ...systemMessageData,
+        createdAt: new Date(),
+        isEdited: false,
+      };
+
+      io.to(roomId).emit("message:new", systemMessage);
+
       // 참여자 목록 업데이트 브로드캐스트
       io.to(roomId).emit("room:participant:update", roomId, room.participants);
 
@@ -254,6 +279,31 @@ io.on("connection", (socket) => {
 
       // 탈퇴 성공 이벤트 전송
       socket.emit("room:leave:success", roomId);
+
+      // 시스템 메시지 생성 및 저장
+      const systemMessageData = {
+        content: `${socket.data.user.nickname}님이 채팅방을 나가셨습니다.`,
+        sender: {
+          id: socket.data.user.uid,
+          email: socket.data.user.email!,
+          nickname: socket.data.user.nickname,
+          isOnline: true,
+        },
+        roomId,
+        type: "system" as const,
+      };
+
+      const systemMessageId = await messageService.createMessage(
+        systemMessageData
+      );
+      const systemMessage = {
+        id: systemMessageId,
+        ...systemMessageData,
+        createdAt: new Date(),
+        isEdited: false,
+      };
+
+      io.to(roomId).emit("message:new", systemMessage);
 
       // 현재 해당 방에 있다면 방에서 나가기
       if (currentRoomId === roomId) {

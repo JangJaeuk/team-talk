@@ -42,6 +42,7 @@ export interface Message {
   roomId: string;
   createdAt: Date;
   isEdited: boolean;
+  type?: "normal" | "system";
 }
 
 export interface ServerToClientEvents {
