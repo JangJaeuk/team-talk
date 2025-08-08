@@ -21,7 +21,10 @@ export const connectSocket = () => {
     socket = null;
   }
 
-  const token = localStorage.getItem("token");
+  const token = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("token="))
+    ?.split("=")[1];
   if (!token) {
     console.error("[Socket] 토큰이 없음");
     throw new Error("Authentication required");

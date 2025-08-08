@@ -13,7 +13,10 @@ const api = axios.create({
 // 요청 인터셉터 - 토큰 추가
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const token = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("token="))
+      ?.split("=")[1];
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -30,7 +33,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // 토큰이 만료되었거나 유효하지 않은 경우
-      localStorage.removeItem("token");
+      document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
       window.location.href = "/";
     }
     return Promise.reject(error);
