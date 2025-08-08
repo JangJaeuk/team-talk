@@ -2,9 +2,13 @@ import * as admin from "firebase-admin";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 
+const serviceAccount = process.env.GOOGLE_SERVICE_ACCOUNT_KEY
+  ? JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY)
+  : {};
+
 // Firebase Admin SDK 초기화
 const app = admin.initializeApp({
-  credential: admin.credential.applicationDefault(),
+  credential: admin.credential.cert(serviceAccount),
   databaseURL: process.env.FIREBASE_DATABASE_URL,
 });
 
