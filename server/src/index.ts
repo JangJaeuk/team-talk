@@ -13,6 +13,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// 헬스체크 엔드포인트
+app.get("/", (req, res) => {
+  res.status(200).json({ status: "healthy", message: "Server is running" });
+});
+
 const httpServer = createServer(app);
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
   cors: {
