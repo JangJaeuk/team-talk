@@ -10,6 +10,7 @@ interface UseSocketOptions {
   onMessage?: (message: Message) => void;
   onRoomJoinSuccess?: (room: ChatRoomType) => void;
   onRoomLeaveSuccess?: () => void;
+  onMessageRead?: (messageId: string, readBy: Message["readBy"]) => void;
 }
 
 interface TypingEvent {
@@ -85,12 +86,19 @@ export const useSocket = (roomId: string, options: UseSocketOptions = {}) => {
     optionsRef.current.onRoomLeaveSuccess?.();
   }, []);
 
-  const handleNewMessage = useCallback((message: Message) => {
-    console.log("[Message] 수신:", message.content, "방:", message.roomId);
-    if (message.roomId === roomIdRef.current) {
-      optionsRef.current.onMessage?.(message);
-    }
-  }, []);
+  const handleNewMessage = useCallback(
+    (message: Message) => {
+      console.log("[Message] 수신:", message.content, "방:", message.roomId);
+      if (message.roomId === roomIdRef.current) {
+        optionsRef.current.onMessage?.(message);
+        // 메시지를 받으면 자동으로 읽음 처리
+        if (socketRef.current && user) {
+          socketRef.current.emit("message:read", message.id);
+        }
+      }
+    },
+    [user]
+  );
 
   const handleTypingStart = useCallback(
     (data: TypingEvent) => {
@@ -123,6 +131,14 @@ export const useSocket = (roomId: string, options: UseSocketOptions = {}) => {
     socket.on("room:join:success", handleRoomJoinSuccess);
     socket.on("room:leave:success", handleRoomLeaveSuccess);
     socket.on("message:new", handleNewMessage);
+    socket.on(
+      "message:read",
+      (messageId: string, readBy: Message["readBy"]) => {
+        if (optionsRef.current.onMessageRead) {
+          optionsRef.current.onMessageRead(messageId, readBy);
+        }
+      }
+    );
     socket.on("typing:start", handleTypingStart);
     socket.on("typing:stop", handleTypingStop);
 
@@ -140,6 +156,7 @@ export const useSocket = (roomId: string, options: UseSocketOptions = {}) => {
         socket.off("room:join:success", handleRoomJoinSuccess);
         socket.off("room:leave:success", handleRoomLeaveSuccess);
         socket.off("message:new", handleNewMessage);
+        socket.off("message:read");
         socket.off("typing:start", handleTypingStart);
         socket.off("typing:stop", handleTypingStop);
       }

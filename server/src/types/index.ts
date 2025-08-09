@@ -43,12 +43,17 @@ export interface Message {
   createdAt: Date;
   isEdited: boolean;
   type?: "normal" | "system";
+  readBy: {
+    userId: string;
+    readAt: Date;
+  }[];
 }
 
 export interface ServerToClientEvents {
   "message:new": (message: Message) => void;
   "message:update": (message: Message) => void;
   "message:delete": (messageId: string) => void;
+  "message:read": (messageId: string, readBy: Message["readBy"]) => void;
   "user:status": (userId: string, isOnline: boolean) => void;
   "room:enter": (roomId: string) => void; // 변경: join -> enter
   "room:exit": (roomId: string) => void; // 변경: leave -> exit
@@ -63,10 +68,11 @@ export interface ServerToClientEvents {
 
 export interface ClientToServerEvents {
   "message:send": (
-    message: Omit<Message, "id" | "createdAt" | "isEdited">
+    message: Omit<Message, "id" | "createdAt" | "isEdited" | "readBy">
   ) => void;
   "message:update": (messageId: string, content: string) => void;
   "message:delete": (messageId: string) => void;
+  "message:read": (messageId: string) => void;
   "room:create": (room: { name: string; description?: string }) => void;
   "room:enter": (roomId: string) => void; // 변경: join -> enter
   "room:exit": (roomId: string) => void; // 변경: leave -> exit

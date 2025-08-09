@@ -145,14 +145,65 @@ export const roomService = {
 export const messageService = {
   // 메시지 저장
   async createMessage(
-    message: Omit<Message, "id" | "createdAt" | "isEdited">
+    message: Omit<Message, "id" | "createdAt" | "isEdited" | "readBy">
   ): Promise<string> {
     const docRef = await db.collection("messages").add({
       ...message,
       createdAt: new Date(),
       isEdited: false,
+      readBy: [],
     });
     return docRef.id;
+  },
+
+  // 단일 메시지 조회
+  async getMessage(messageId: string): Promise<Message | null> {
+    const doc = await db.collection("messages").doc(messageId).get();
+    if (!doc.exists) {
+      return null;
+    }
+    return {
+      id: doc.id,
+      ...doc.data(),
+    } as Message;
+  },
+
+  // 메시지 읽음 상태 업데이트
+  async markMessageAsRead(
+    messageId: string,
+    userId: string
+  ): Promise<Message["readBy"]> {
+    const messageRef = db.collection("messages").doc(messageId);
+    let updatedReadBy: Message["readBy"] = [];
+
+    await db.runTransaction(async (transaction) => {
+      const messageDoc = await transaction.get(messageRef);
+      if (!messageDoc.exists) {
+        throw new Error("Message not found");
+      }
+
+      const messageData = messageDoc.data() as Message;
+      const currentReadBy = messageData.readBy || [];
+
+      // 이미 읽음 처리가 되어 있지 않은 경우에만 추가
+      if (!currentReadBy.some((read) => read.userId === userId)) {
+        updatedReadBy = [
+          ...currentReadBy,
+          {
+            userId,
+            readAt: new Date(),
+          },
+        ];
+
+        transaction.update(messageRef, {
+          readBy: updatedReadBy,
+        });
+      } else {
+        updatedReadBy = currentReadBy;
+      }
+    });
+
+    return updatedReadBy;
   },
 
   // 특정 방의 메시지 목록 조회

@@ -94,9 +94,21 @@ const ChatRoom: FC<Props> = ({ roomId }) => {
 
       setMessages((prev) => {
         const existingMessageIds = new Set(prev.map((msg) => msg.id));
-        const uniqueNewMessages = newMessages.filter(
-          (msg: Message) => !existingMessageIds.has(msg.id)
-        );
+        const uniqueNewMessages = newMessages
+          .filter((msg: Message) => !existingMessageIds.has(msg.id))
+          .map((msg: Message) => ({
+            ...msg,
+            readBy: msg.readBy || [],
+          }));
+
+        // 새로 로드된 메시지들 자동 읽음 처리
+        if (user && isJoined) {
+          const socket = getSocket();
+          uniqueNewMessages.forEach((msg: Message) => {
+            socket.emit("message:read", msg.id);
+          });
+        }
+
         return [...prev, ...uniqueNewMessages];
       });
 
@@ -115,15 +127,26 @@ const ChatRoom: FC<Props> = ({ roomId }) => {
         if (prev.some((msg) => msg.id === message.id)) {
           return prev;
         }
-        return [message, ...prev];
+        // readBy 필드가 없는 경우 빈 배열로 초기화
+        const messageWithReadBy = {
+          ...message,
+          readBy: message.readBy || [],
+        };
+        return [messageWithReadBy, ...prev];
       });
 
       // 내가 보낸 메시지이거나 스크롤이 아래에 있을 때만 스크롤
       if (message.sender.id === user?.id || isScrolledToBottom()) {
         scrollToBottom();
       }
+
+      // 메시지를 받으면 자동으로 읽음 처리
+      if (user && isJoined) {
+        const socket = getSocket();
+        socket.emit("message:read", message.id);
+      }
     },
-    [user?.id]
+    [user, isJoined]
   );
 
   useEffect(() => {
@@ -134,6 +157,11 @@ const ChatRoom: FC<Props> = ({ roomId }) => {
     onMessage: handleNewMessage,
     onRoomJoinSuccess: (updatedRoom) => setRoom(updatedRoom),
     onRoomLeaveSuccess: () => router.push("/rooms"),
+    onMessageRead: (messageId, readBy) => {
+      setMessages((prev) =>
+        prev.map((msg) => (msg.id === messageId ? { ...msg, readBy } : msg))
+      );
+    },
   });
 
   // 초기 메시지 로드
@@ -206,6 +234,173 @@ const ChatRoom: FC<Props> = ({ roomId }) => {
       timestamp._seconds * 1000 + timestamp._nanoseconds / 1000000
     );
     return date.toLocaleString();
+  };
+
+  // 메시지 읽음 상태 아이콘 컴포넌트
+  const MessageReadStatus: FC<{ message: Message; participants: string[] }> = ({
+    message,
+    participants,
+  }) => {
+    const [showOverlay, setShowOverlay] = useState(false);
+    const [overlayPosition, setOverlayPosition] = useState<"top" | "bottom">(
+      "bottom"
+    );
+    const buttonRef = useRef<HTMLButtonElement>(null);
+    const overlayRef = useRef<HTMLDivElement>(null);
+
+    // 읽음 상태에 따라 아이콘 결정
+    const allRead = participants.every((participantId) =>
+      message.readBy.some((read) => read.userId === participantId)
+    );
+
+    // 참여자별 읽음 상태 정보
+    const getReadStatus = (participantId: string) => {
+      const readInfo = message.readBy.find(
+        (read) => read.userId === participantId
+      );
+      return readInfo ? "(읽음)" : "";
+    };
+
+    // 오버레이 위치 계산
+    const updateOverlayPosition = useCallback(() => {
+      if (!buttonRef.current || !overlayRef.current) return;
+
+      const buttonRect = buttonRef.current.getBoundingClientRect();
+      const overlayHeight = overlayRef.current.offsetHeight;
+      const viewportHeight = window.innerHeight;
+
+      // 버튼 위쪽 공간이 오버레이 높이보다 크면 위에 표시
+      // 아니면 아래에 표시
+      const newPosition =
+        buttonRect.top > overlayHeight + 10 ? "bottom" : "top";
+      setOverlayPosition(newPosition);
+    }, []);
+
+    // 오버레이 토글 시 위치 계산
+    const handleToggleOverlay = () => {
+      const newShowOverlay = !showOverlay;
+      setShowOverlay(newShowOverlay);
+      if (newShowOverlay) {
+        setTimeout(updateOverlayPosition, 0);
+      }
+    };
+
+    // 창 크기 변경 시 위치 재계산
+    useEffect(() => {
+      if (showOverlay) {
+        window.addEventListener("resize", updateOverlayPosition);
+        return () =>
+          window.removeEventListener("resize", updateOverlayPosition);
+      }
+    }, [showOverlay, updateOverlayPosition]);
+
+    // 오버레이 외부 클릭 시 닫기
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          overlayRef.current &&
+          !overlayRef.current.contains(event.target as Node) &&
+          !buttonRef.current?.contains(event.target as Node)
+        ) {
+          setShowOverlay(false);
+        }
+      };
+
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }, []);
+
+    return (
+      <div className="relative inline-block">
+        <button
+          ref={buttonRef}
+          onClick={handleToggleOverlay}
+          className="text-gray-500 hover:text-gray-700"
+        >
+          {allRead ? (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-4 h-4"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4.5 12.75l6 6 9-13.5"
+              />
+            </svg>
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-4 h-4"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          )}
+        </button>
+
+        {showOverlay && (
+          <div
+            ref={overlayRef}
+            className={`absolute ${
+              overlayPosition === "bottom"
+                ? "bottom-full mb-2"
+                : "top-full mt-2"
+            } right-0 bg-white/90 backdrop-blur-sm border border-gray-200 shadow-lg rounded-lg p-2 min-w-[150px] z-10`}
+          >
+            {participants
+              .filter((participantId) => participantId !== user?.id) // 본인 제외
+              .sort((a, b) => {
+                // 읽은 사람이 위로 오도록 정렬
+                const aRead = message.readBy.some((read) => read.userId === a);
+                const bRead = message.readBy.some((read) => read.userId === b);
+                if (aRead && !bRead) return -1;
+                if (!aRead && bRead) return 1;
+                return 0;
+              })
+              .map((participantId) => {
+                const participant = messages.find(
+                  (msg) => msg.sender.id === participantId
+                )?.sender;
+                if (!participant) return null;
+                const hasRead = message.readBy.some(
+                  (read) => read.userId === participantId
+                );
+                return (
+                  <div
+                    key={participantId}
+                    className={`text-sm py-1 whitespace-nowrap text-gray-800 ${
+                      hasRead ? "opacity-100" : "opacity-70"
+                    }`}
+                  >
+                    <span className="font-medium">{participant.nickname}</span>
+                    <span
+                      className={`ml-1 ${
+                        hasRead ? "text-blue-600" : "text-gray-600"
+                      }`}
+                    >
+                      {getReadStatus(participantId)}
+                    </span>
+                  </div>
+                );
+              })}
+          </div>
+        )}
+      </div>
+    );
   };
 
   // 타이핑 중인 사용자의 닉네임 찾기
@@ -312,12 +507,12 @@ const ChatRoom: FC<Props> = ({ roomId }) => {
               ) : (
                 <div
                   key={msg.id}
-                  className={`mb-2 ${
-                    msg.sender.id === user?.id ? "text-right" : "text-left"
+                  className={`mb-2 flex items-end gap-1 ${
+                    msg.sender.id === user?.id ? "flex-row-reverse" : "flex-row"
                   }`}
                 >
                   <div
-                    className={`inline-block p-2 rounded-lg ${
+                    className={`p-2 rounded-lg max-w-[70%] break-words ${
                       msg.sender.id === user?.id
                         ? "bg-blue-500 text-white"
                         : "bg-gray-200"
@@ -328,9 +523,17 @@ const ChatRoom: FC<Props> = ({ roomId }) => {
                     </div>
                     <div>{msg.content}</div>
                     <div className="text-xs opacity-75">
-                      {formatTimestamp(msg.createdAt)}
+                      <span>{formatTimestamp(msg.createdAt)}</span>
                     </div>
                   </div>
+                  {msg.sender.id === user?.id && (
+                    <div className="flex-shrink-0 pb-1">
+                      <MessageReadStatus
+                        message={msg}
+                        participants={room?.participants || []}
+                      />
+                    </div>
+                  )}
                 </div>
               )
             )}

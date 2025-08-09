@@ -186,9 +186,22 @@ io.on("connection", (socket) => {
     currentRoomId = roomId;
 
     try {
-      // 방 메시지 목록 전송
+      // 방의 모든 메시지를 가져와서 읽음 처리
       const messages = await messageService.getMessagesByRoom(roomId);
-      socket.emit("room:messages", messages);
+
+      // 각 메시지에 대해 읽음 처리
+      for (const message of messages) {
+        const readBy = await messageService.markMessageAsRead(
+          message.id,
+          socket.data.user.uid
+        );
+        // 읽음 상태 업데이트를 방의 모든 사용자에게 브로드캐스트
+        io.to(roomId).emit("message:read", message.id, readBy);
+      }
+
+      // 업데이트된 메시지 목록 전송
+      const updatedMessages = await messageService.getMessagesByRoom(roomId);
+      socket.emit("room:messages", updatedMessages);
 
       // 업데이트된 방 목록 브로드캐스트
       const rooms = await roomService.getRooms();
@@ -252,6 +265,7 @@ io.on("connection", (socket) => {
         ...systemMessageData,
         createdAt: new Date(),
         isEdited: false,
+        readBy: [],
       };
 
       io.to(roomId).emit("message:new", systemMessage);
@@ -301,6 +315,7 @@ io.on("connection", (socket) => {
         ...systemMessageData,
         createdAt: new Date(),
         isEdited: false,
+        readBy: [],
       };
 
       io.to(roomId).emit("message:new", systemMessage);
@@ -346,6 +361,7 @@ io.on("connection", (socket) => {
         },
         createdAt: new Date(),
         isEdited: false,
+        readBy: [], // 초기에는 아무도 읽지 않음
       };
 
       // 해당 방에 새 메시지 전송
@@ -362,6 +378,23 @@ io.on("connection", (socket) => {
       io.emit("room:list", updatedRooms);
     } catch (error) {
       console.error("Error sending message:", error);
+    }
+  });
+
+  // 메시지 읽음 처리
+  socket.on("message:read", async (messageId) => {
+    try {
+      const readBy = await messageService.markMessageAsRead(
+        messageId,
+        socket.data.user.uid
+      );
+      // 해당 방의 모든 사용자에게 읽음 상태 업데이트를 브로드캐스트
+      const message = await messageService.getMessage(messageId);
+      if (message) {
+        io.to(message.roomId).emit("message:read", messageId, readBy);
+      }
+    } catch (error) {
+      console.error("Error marking message as read:", error);
     }
   });
 
