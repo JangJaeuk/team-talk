@@ -8,6 +8,7 @@ interface ChatState {
   typingUsers: { [userId: string]: boolean };
   isLoading: boolean;
   error: string | null;
+  rooms: ChatRoom[];
 
   // 액션
   setCurrentRoom: (room: ChatRoom) => void;
@@ -17,6 +18,9 @@ interface ChatState {
   setTypingStatus: (userId: string, isTyping: boolean) => void;
   clearMessages: () => void;
   setError: (error: string | null) => void;
+  setRooms: (rooms: ChatRoom[]) => void;
+  updateRoomOrder: (roomId: string) => void;
+  markRoomAsRead: (roomId: string) => void;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -25,6 +29,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   typingUsers: {},
   isLoading: false,
   error: null,
+  rooms: [],
 
   setCurrentRoom: (room) => {
     set({ currentRoom: room });
@@ -86,5 +91,32 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   setError: (error) => {
     set({ error });
+  },
+
+  setRooms: (rooms) => {
+    set({ rooms });
+  },
+
+  updateRoomOrder: (roomId) => {
+    set((state) => {
+      const rooms = [...state.rooms];
+      const roomIndex = rooms.findIndex((room) => room.id === roomId);
+      if (roomIndex === -1) return state;
+
+      const room = rooms[roomIndex];
+      rooms.splice(roomIndex, 1);
+      rooms.unshift(room);
+
+      return { rooms };
+    });
+  },
+
+  markRoomAsRead: (roomId) => {
+    set((state) => {
+      const rooms = state.rooms.map((room) =>
+        room.id === roomId ? { ...room, unreadCount: 0 } : room
+      );
+      return { rooms };
+    });
   },
 }));

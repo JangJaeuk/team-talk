@@ -81,7 +81,7 @@ app.get("/api/auth/me", authMiddleware, async (req, res) => {
 // 채팅방 목록 조회
 app.get("/api/rooms", authMiddleware, async (req, res) => {
   try {
-    const rooms = await roomService.getRooms();
+    const rooms = await roomService.getRooms(req.user!.uid);
     res.json(rooms);
   } catch (error) {
     console.error("Error fetching rooms:", error);
@@ -189,23 +189,30 @@ io.on("connection", (socket) => {
       // 방의 모든 메시지를 가져와서 읽음 처리
       const messages = await messageService.getMessagesByRoom(roomId);
 
-      // 각 메시지에 대해 읽음 처리
+      // 읽지 않은 메시지만 읽음 처리
       for (const message of messages) {
-        const readBy = await messageService.markMessageAsRead(
-          message.id,
-          socket.data.user.uid
-        );
-        // 읽음 상태 업데이트를 방의 모든 사용자에게 브로드캐스트
-        io.to(roomId).emit("message:read", message.id, readBy);
+        if (
+          !message.readBy?.some((read) => read.userId === socket.data.user.uid)
+        ) {
+          const readBy = await messageService.markMessageAsRead(
+            message.id,
+            socket.data.user.uid
+          );
+          // 읽음 상태 업데이트를 방의 모든 사용자에게 브로드캐스트
+          io.to(roomId).emit("message:read", message.id, readBy);
+        }
       }
 
       // 업데이트된 메시지 목록 전송
       const updatedMessages = await messageService.getMessagesByRoom(roomId);
       socket.emit("room:messages", updatedMessages);
 
-      // 업데이트된 방 목록 브로드캐스트
-      const rooms = await roomService.getRooms();
-      io.emit("room:list", rooms);
+      // 각 클라이언트에게 개별적으로 방 목록 전송
+      const sockets = await io.fetchSockets();
+      for (const s of sockets) {
+        const rooms = await roomService.getRooms(s.data.user.uid);
+        s.emit("room:list", rooms);
+      }
     } catch (error) {
       console.error("Error handling room enter:", error);
     }
@@ -217,9 +224,12 @@ io.on("connection", (socket) => {
     socket.leave(roomId);
 
     try {
-      // 업데이트된 방 목록 브로드캐스트
-      const rooms = await roomService.getRooms();
-      io.emit("room:list", rooms);
+      // 각 클라이언트에게 개별적으로 방 목록 전송
+      const sockets = await io.fetchSockets();
+      for (const s of sockets) {
+        const rooms = await roomService.getRooms(s.data.user.uid);
+        s.emit("room:list", rooms);
+      }
     } catch (error) {
       console.error("Error handling room exit:", error);
     }
@@ -373,9 +383,20 @@ io.on("connection", (socket) => {
         roomId: message.roomId,
       });
 
-      // 방 목록 갱신을 위해 최신 방 목록을 모든 클라이언트에게 전송
-      const updatedRooms = await roomService.getRooms();
-      io.emit("room:list", updatedRooms);
+      // 방 참여자들의 읽지 않은 메시지 수 업데이트
+      const room = await roomService.getRoom(message.roomId);
+      if (room) {
+        const sockets = await io.fetchSockets();
+        for (const s of sockets) {
+          // 메시지 발신자는 자동으로 읽음 처리
+          if (s.data.user.uid === socket.data.user.uid) {
+            await messageService.markMessageAsRead(messageId, s.data.user.uid);
+          }
+          // 각 클라이언트에게 개별적으로 방 목록 전송
+          const rooms = await roomService.getRooms(s.data.user.uid);
+          s.emit("room:list", rooms);
+        }
+      }
     } catch (error) {
       console.error("Error sending message:", error);
     }

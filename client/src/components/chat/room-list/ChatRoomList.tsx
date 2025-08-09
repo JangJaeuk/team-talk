@@ -2,8 +2,9 @@
 
 import api from "@/lib/axios";
 import { getSocket } from "@/lib/socket"; // 소켓 유틸리티 사용
-import { useAuthStore } from "@/store/useAuthStore"; // named import로 수정
-import { ChatRoom, Message } from "@/types";
+import { useAuthStore } from "@/store/useAuthStore";
+import { useChatStore } from "@/store/useChatStore";
+import { Message } from "@/types";
 import { FC, useEffect, useState } from "react";
 
 interface Props {
@@ -11,7 +12,7 @@ interface Props {
 }
 
 const ChatRoomList: FC<Props> = ({ onJoinRoom }) => {
-  const [rooms, setRooms] = useState<ChatRoom[]>([]);
+  const { rooms, setRooms, updateRoomOrder, markRoomAsRead } = useChatStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newRoomName, setNewRoomName] = useState("");
@@ -45,9 +46,9 @@ const ChatRoomList: FC<Props> = ({ onJoinRoom }) => {
         setRooms(updatedRooms);
       });
 
-      // 새 메시지가 오면 방 목록 갱신
-      socket.on("message:new", () => {
-        fetchRooms();
+      // 새 메시지가 오면 해당 방을 최상단으로 이동
+      socket.on("message:new", (message) => {
+        updateRoomOrder(message.roomId);
       });
 
       // 방 가입/탈퇴 성공 이벤트 처리
@@ -120,6 +121,7 @@ const ChatRoomList: FC<Props> = ({ onJoinRoom }) => {
   const handleEnterRoom = (roomId: string) => {
     const socket = getSocket();
     socket.emit("room:enter", roomId);
+    markRoomAsRead(roomId);
     onJoinRoom(roomId);
   };
 
@@ -167,10 +169,20 @@ const ChatRoomList: FC<Props> = ({ onJoinRoom }) => {
                     className="p-4 border rounded-lg hover:bg-gray-50"
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-lg font-semibold">{room.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-semibold">{room.name}</h3>
+                        {room.unreadCount > 0 && (
+                          <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                            {room.unreadCount}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => handleEnterRoom(room.id)}
+                          onClick={() => {
+                            handleEnterRoom(room.id);
+                            markRoomAsRead(room.id);
+                          }}
                           className="text-blue-500 hover:text-blue-600"
                         >
                           입장
@@ -183,7 +195,9 @@ const ChatRoomList: FC<Props> = ({ onJoinRoom }) => {
                         </button>
                       </div>
                     </div>
-                    <p className="text-gray-600 text-sm">{room.lastMessage?.content}</p>
+                    <p className="text-gray-600 text-sm">
+                      {room.lastMessage?.content}
+                    </p>
                     <div className="mt-2 text-xs text-gray-500">
                       참여자 {room.participants.length}명
                     </div>

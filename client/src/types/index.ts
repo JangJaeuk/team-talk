@@ -14,6 +14,7 @@ export interface ChatRoom {
   participantCount: number;
   lastMessage?: Message | null;
   participants: string[]; // User[] -> string[]로 변경
+  unreadCount: number; // 읽지 않은 메시지 수
 }
 
 export interface Message {

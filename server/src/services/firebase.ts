@@ -13,7 +13,7 @@ export const roomService = {
   },
 
   // 채팅방 목록 조회
-  async getRooms(): Promise<ChatRoom[]> {
+  async getRooms(userId?: string): Promise<ChatRoom[]> {
     const snapshot = await db
       .collection("rooms")
       .orderBy("createdAt", "desc")
@@ -27,9 +27,10 @@ export const roomService = {
         } as ChatRoom)
     );
 
-    // 각 방의 최신 메시지 가져오기
-    const roomsWithLastMessage = await Promise.all(
+    // 각 방의 최신 메시지와 읽지 않은 메시지 수 가져오기
+    const roomsWithDetails = await Promise.all(
       rooms.map(async (room) => {
+        // 최신 메시지 가져오기
         const messageSnapshot = await db
           .collection("messages")
           .where("roomId", "==", room.id)
@@ -44,14 +45,40 @@ export const roomService = {
             } as Message)
           : null;
 
+        // 읽지 않은 메시지 수 계산
+        let unreadCount = 0;
+        if (userId) {
+          const messagesSnapshot = await db
+            .collection("messages")
+            .where("roomId", "==", room.id)
+            .orderBy("createdAt", "desc")
+            .get();
+
+          // 사용자가 읽지 않은 메시지 수 계산
+          unreadCount = messagesSnapshot.docs.filter((doc) => {
+            const message = doc.data();
+            return !message.readBy?.some(
+              (read: { userId: string }) => read.userId === userId
+            );
+          }).length;
+        }
+
         return {
           ...room,
           lastMessage,
+          unreadCount,
         };
       })
     );
 
-    return roomsWithLastMessage;
+    // 최신 메시지 시간 순으로 정렬
+    roomsWithDetails.sort((a, b) => {
+      const aTime = (a.lastMessage?.createdAt as any)?._seconds || 0;
+      const bTime = (b.lastMessage?.createdAt as any)?._seconds || 0;
+      return bTime - aTime;
+    });
+
+    return roomsWithDetails;
   },
 
   // 단일 채팅방 조회
@@ -187,11 +214,12 @@ export const messageService = {
 
       // 이미 읽음 처리가 되어 있지 않은 경우에만 추가
       if (!currentReadBy.some((read) => read.userId === userId)) {
+        const readAt = new Date();
         updatedReadBy = [
           ...currentReadBy,
           {
             userId,
-            readAt: new Date(),
+            readAt,
           },
         ];
 
