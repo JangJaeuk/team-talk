@@ -21,10 +21,6 @@ export const useRoomList = () => {
     }
   }, [setRooms]);
 
-  useEffect(() => {
-    fetchRooms();
-  }, []); // fetchRooms가 메모이제이션되어 있으므로 안전
-
   const filterRoomsByQuery = useCallback((rooms: Room[], query: string) => {
     return rooms.filter((room) =>
       room.name.toLowerCase().includes(query.toLowerCase())
@@ -38,6 +34,10 @@ export const useRoomList = () => {
   const getAvailableRooms = useCallback(() => {
     return rooms.filter((room) => !room.participants.includes(user?.id || ""));
   }, [rooms, user?.id]);
+
+  useEffect(() => {
+    fetchRooms();
+  }, []); // fetchRooms가 메모이제이션되어 있으므로 안전
 
   return {
     rooms,

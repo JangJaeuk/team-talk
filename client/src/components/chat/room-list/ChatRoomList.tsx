@@ -1,14 +1,14 @@
 "use client";
 
-import { useRoomList } from "@/hooks/useRoomList";
-import { useRoomListSocket } from "@/hooks/useRoomListSocket";
+import { useRoomList } from "@/hooks/chat/room-list/useRoomList";
+import { useRoomListSocket } from "@/hooks/chat/room-list/useRoomListSocket";
 import api from "@/lib/axios";
 import { RoomFormData } from "@/types/room";
 import { useState } from "react";
-import { AvailableRoomList } from "./AvailableRoomList";
-import { CreateRoomModal } from "./CreateRoomModal";
-import { JoinedRoomList } from "./JoinedRoomList";
-import { RoomSearchBar } from "./RoomSearchBar";
+import { AvailableRoomList } from "./list/AvailableRoomList";
+import { JoinedRoomList } from "./list/JoinedRoomList";
+import { CreateRoomModal } from "./modal/CreateRoomModal";
+import { RoomSearchBar } from "./tool/RoomSearchBar";
 
 interface Props {
   onJoinRoom: (roomId: string) => void;
