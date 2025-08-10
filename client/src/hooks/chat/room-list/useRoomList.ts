@@ -1,4 +1,4 @@
-import api from "@/lib/axios";
+import { httpClient } from "@/lib/axios";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useChatStore } from "@/store/useChatStore";
 import { Room } from "@/types/room";
@@ -12,7 +12,7 @@ export const useRoomList = () => {
   const fetchRooms = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await api.get("/rooms");
+      const response = await httpClient.get<Room[]>("/rooms");
       setRooms(response.data);
     } catch (error) {
       console.error("Failed to fetch rooms:", error);

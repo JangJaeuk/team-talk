@@ -1,6 +1,6 @@
 "use client";
 
-import { getSocket } from "@/lib/socket";
+import { socketClient } from "@/lib/socket";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useChatStore } from "@/store/useChatStore";
 import { ChatRoom as ChatRoomType, Message } from "@/types";
@@ -22,7 +22,9 @@ export const useSocket = (roomId: string, options: UseSocketOptions = {}) => {
   const { user } = useAuthStore();
   const { setTypingStatus } = useChatStore();
   const joinedRoom = useRef<string | null>(null);
-  const socketRef = useRef<ReturnType<typeof getSocket> | null>(null);
+  const socketRef = useRef<ReturnType<typeof socketClient.getSocket> | null>(
+    null
+  );
   const optionsRef = useRef(options);
   const roomIdRef = useRef(roomId);
 
@@ -33,38 +35,44 @@ export const useSocket = (roomId: string, options: UseSocketOptions = {}) => {
   }, [options, roomId]);
 
   // 방 입장 함수
-  const enterRoom = useCallback((socket: ReturnType<typeof getSocket>) => {
-    if (!socket.connected) {
-      console.log("[Room] 소켓이 연결되지 않음");
-      return;
-    }
+  const enterRoom = useCallback(
+    (socket: ReturnType<typeof socketClient.getSocket>) => {
+      if (!socket.connected) {
+        console.log("[Room] 소켓이 연결되지 않음");
+        return;
+      }
 
-    const currentRoomId = roomIdRef.current;
-    if (joinedRoom.current === currentRoomId) {
-      console.log("[Room] 이미 입장한 방:", currentRoomId);
-      return;
-    }
+      const currentRoomId = roomIdRef.current;
+      if (joinedRoom.current === currentRoomId) {
+        console.log("[Room] 이미 입장한 방:", currentRoomId);
+        return;
+      }
 
-    console.log("[Room] 방 입장 시도:", currentRoomId);
-    socket.emit("room:enter", currentRoomId);
-    joinedRoom.current = currentRoomId;
-  }, []); // roomId 의존성 제거
+      console.log("[Room] 방 입장 시도:", currentRoomId);
+      socket.emit("room:enter", currentRoomId);
+      joinedRoom.current = currentRoomId;
+    },
+    []
+  ); // roomId 의존성 제거
 
   // 방 퇴장 함수
-  const exitRoom = useCallback((socket: ReturnType<typeof getSocket>) => {
-    const currentRoomId = roomIdRef.current;
-    if (!socket.connected || joinedRoom.current !== currentRoomId) {
-      return;
-    }
+  const exitRoom = useCallback(
+    (socket: ReturnType<typeof socketClient.getSocket>) => {
+      const currentRoomId = roomIdRef.current;
+      if (!socket.connected || joinedRoom.current !== currentRoomId) {
+        return;
+      }
 
-    console.log("[Room] 방 퇴장:", currentRoomId);
-    socket.emit("room:exit", currentRoomId);
-    joinedRoom.current = null;
-  }, []); // roomId 의존성 제거
+      console.log("[Room] 방 퇴장:", currentRoomId);
+      socket.emit("room:exit", currentRoomId);
+      joinedRoom.current = null;
+    },
+    []
+  ); // roomId 의존성 제거
 
   // 이벤트 핸들러들을 useCallback으로 메모이제이션
   const handleConnect = useCallback(
-    (socket: ReturnType<typeof getSocket>) => {
+    (socket: ReturnType<typeof socketClient.getSocket>) => {
       console.log("[Socket] 연결됨, 방 입장 시도");
       if (socket.connected) {
         enterRoom(socket);
@@ -121,7 +129,7 @@ export const useSocket = (roomId: string, options: UseSocketOptions = {}) => {
   // 소켓 설정
   useEffect(() => {
     console.log("[Socket] 초기화 시작");
-    const socket = getSocket();
+    const socket = socketClient.getSocket();
     if (!socket) return;
 
     socketRef.current = socket;

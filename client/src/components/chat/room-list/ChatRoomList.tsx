@@ -2,7 +2,7 @@
 
 import { useRoomList } from "@/hooks/chat/room-list/useRoomList";
 import { useRoomListSocket } from "@/hooks/chat/room-list/useRoomListSocket";
-import api from "@/lib/axios";
+import { httpClient } from "@/lib/axios";
 import { RoomFormData } from "@/types/room";
 import { useState } from "react";
 import { AvailableRoomList } from "./list/AvailableRoomList";
@@ -38,7 +38,7 @@ const ChatRoomList = ({ onJoinRoom }: Props) => {
 
   const handleCreateRoom = async (data: RoomFormData) => {
     try {
-      await api.post("/rooms", data);
+      await httpClient.post("/rooms", data);
       setShowCreateModal(false);
     } catch (error) {
       console.error("Failed to create room:", error);

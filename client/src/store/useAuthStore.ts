@@ -1,4 +1,4 @@
-import api from "@/lib/axios";
+import { httpClient } from "@/lib/axios";
 import { User } from "@/types";
 import axios from "axios";
 import Cookies from "js-cookie";
@@ -50,7 +50,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       // 토큰을 헤더에 포함시켜 사용자 정보 요청
       console.log("Fetching user info");
-      const response = await api.get("/auth/me");
+      const response = await httpClient.get<User>("/auth/me");
       const user = response.data;
       console.log("User info received:", user);
 

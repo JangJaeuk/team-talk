@@ -1,8 +1,8 @@
 "use client";
 
 import { useSocket } from "@/hooks/useSocket";
-import api from "@/lib/axios";
-import { getSocket } from "@/lib/socket";
+import { httpClient } from "@/lib/axios";
+import { socketClient } from "@/lib/socket";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useChatStore } from "@/store/useChatStore";
 import type { ChatRoom as ChatRoomType, Message } from "@/types";
@@ -38,14 +38,14 @@ const ChatRoom: FC<Props> = ({ roomId }) => {
   // 방 가입
   const handleJoinRoom = () => {
     if (!user) return;
-    const socket = getSocket();
+    const socket = socketClient.getSocket();
     socket.emit("room:join", roomId);
   };
 
   // 방 탈퇴
   const handleLeaveRoom = () => {
     if (!user) return;
-    const socket = getSocket();
+    const socket = socketClient.getSocket();
     socket.emit("room:leave", roomId);
     router.push("/rooms"); // 방 목록으로 이동
   };
@@ -53,7 +53,7 @@ const ChatRoom: FC<Props> = ({ roomId }) => {
   // 채팅방 정보 가져오기
   const fetchRoomInfo = useCallback(async () => {
     try {
-      const response = await api.get(`/rooms/${roomId}`);
+      const response = await httpClient.get<ChatRoomType>(`/rooms/${roomId}`);
       setRoom(response.data);
     } catch (error) {
       console.error("Error fetching room info:", error);
@@ -84,7 +84,10 @@ const ChatRoom: FC<Props> = ({ roomId }) => {
 
       try {
         setIsLoading(true);
-        const response = await api.get(`/rooms/${roomId}/messages`, {
+        const response = await httpClient.get<{
+          messages: Message[];
+          hasNextPage: boolean;
+        }>(`/rooms/${roomId}/messages`, {
           params: {
             limit: 30,
             lastMessageId,
@@ -104,7 +107,7 @@ const ChatRoom: FC<Props> = ({ roomId }) => {
 
           // 새로 로드된 메시지들 자동 읽음 처리
           if (user && isJoined) {
-            const socket = getSocket();
+            const socket = socketClient.getSocket();
             uniqueNewMessages.forEach((msg: Message) => {
               socket.emit("message:read", msg.id);
             });
@@ -145,7 +148,7 @@ const ChatRoom: FC<Props> = ({ roomId }) => {
 
       // 메시지를 받으면 자동으로 읽음 처리
       if (user && isJoined) {
-        const socket = getSocket();
+        const socket = socketClient.getSocket();
         socket.emit("message:read", message.id);
       }
     },

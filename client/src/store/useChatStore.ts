@@ -1,4 +1,4 @@
-import { getSocket } from "@/lib/socket";
+import { socketClient } from "@/lib/socket";
 import { ChatRoom, Message } from "@/types";
 import { create } from "zustand";
 
@@ -52,7 +52,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const currentRoom = get().currentRoom;
     if (!currentRoom) return;
 
-    const socket = getSocket();
+    const socket = socketClient.getSocket();
     socket.emit("message:update", messageId, content);
 
     set((state) => ({
@@ -68,7 +68,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const currentRoom = get().currentRoom;
     if (!currentRoom) return;
 
-    const socket = getSocket();
+    const socket = socketClient.getSocket();
     socket.emit("message:delete", messageId);
 
     set((state) => ({
