@@ -1,4 +1,4 @@
-interface RoomSearchBarProps {
+interface Props {
   searchQuery: string;
   onSearch: (query: string) => void;
   onCreateRoom: () => void;
@@ -8,7 +8,7 @@ export const RoomSearchBar = ({
   searchQuery,
   onSearch,
   onCreateRoom,
-}: RoomSearchBarProps) => {
+}: Props) => {
   return (
     <div className="flex justify-between mb-4">
       <input

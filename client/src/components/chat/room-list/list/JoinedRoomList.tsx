@@ -1,17 +1,13 @@
 import { Room } from "@/types/room";
 
-interface JoinedRoomListProps {
+interface Props {
   rooms: Room[];
   onJoinRoom: (roomId: string) => void;
   onLeaveRoom: (roomId: string) => void;
   onEnterRoom: (roomId: string) => void;
 }
 
-export const JoinedRoomList = ({
-  rooms,
-  onEnterRoom,
-  onLeaveRoom,
-}: JoinedRoomListProps) => {
+export const JoinedRoomList = ({ rooms, onEnterRoom, onLeaveRoom }: Props) => {
   return (
     <div>
       <h2 className="text-lg font-bold mb-2">가입한 채팅방</h2>
@@ -44,7 +40,7 @@ export const JoinedRoomList = ({
             </div>
             <p className="text-gray-600 text-sm">{room.lastMessage?.content}</p>
             <div className="mt-2 text-xs text-gray-500">
-              참여자 {room.participantCount}명
+              참여자 {room.participants.length}명
             </div>
           </div>
         ))}

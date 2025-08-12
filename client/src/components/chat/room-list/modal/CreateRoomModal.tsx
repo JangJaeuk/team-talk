@@ -1,17 +1,13 @@
 import { RoomFormData } from "@/types/room";
 import { useState } from "react";
 
-interface CreateRoomModalProps {
+interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: RoomFormData) => void;
 }
 
-export const CreateRoomModal = ({
-  isOpen,
-  onClose,
-  onSubmit,
-}: CreateRoomModalProps) => {
+export const CreateRoomModal = ({ isOpen, onClose, onSubmit }: Props) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 

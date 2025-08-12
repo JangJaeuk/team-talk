@@ -1,6 +1,6 @@
 "use client";
 
-import ChatRoom from "@/components/chat/room/ChatRoom";
+import { ChatRoom } from "@/components/chat/room/ChatRoom";
 import { useParams } from "next/navigation";
 
 export default function ChatRoomPage() {

@@ -4,7 +4,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function LoginForm() {
+export const LoginForm = () => {
   const router = useRouter();
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState("");
@@ -103,4 +103,4 @@ export function LoginForm() {
       </div>
     </div>
   );
-}
+};

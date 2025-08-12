@@ -1,14 +1,11 @@
 import { Room } from "@/types/room";
 
-interface AvailableRoomListProps {
+interface Props {
   rooms: Room[];
   onJoinRoom: (roomId: string) => void;
 }
 
-export const AvailableRoomList = ({
-  rooms,
-  onJoinRoom,
-}: AvailableRoomListProps) => {
+export const AvailableRoomList = ({ rooms, onJoinRoom }: Props) => {
   return (
     <div>
       <h2 className="text-lg font-bold mb-2">참여 가능한 채팅방</h2>

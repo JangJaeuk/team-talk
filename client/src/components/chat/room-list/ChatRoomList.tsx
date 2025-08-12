@@ -4,19 +4,25 @@ import { useRoomList } from "@/hooks/chat/room-list/useRoomList";
 import { useRoomListSocket } from "@/hooks/chat/room-list/useRoomListSocket";
 import { httpClient } from "@/lib/axios";
 import { RoomFormData } from "@/types/room";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useState } from "react";
+import { RoomListHeader } from "./layout/RoomListHeader";
 import { AvailableRoomList } from "./list/AvailableRoomList";
 import { JoinedRoomList } from "./list/JoinedRoomList";
 import { CreateRoomModal } from "./modal/CreateRoomModal";
 import { RoomSearchBar } from "./tool/RoomSearchBar";
 
-interface Props {
-  onJoinRoom: (roomId: string) => void;
-}
-
-const ChatRoomList = ({ onJoinRoom }: Props) => {
+export const ChatRoomList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const router = useRouter();
+
+  const onJoinRoom = useCallback(
+    (roomId: string) => {
+      router.push(`/rooms/${roomId}`);
+    },
+    [router]
+  );
 
   const {
     isLoading,
@@ -52,37 +58,38 @@ const ChatRoomList = ({ onJoinRoom }: Props) => {
   );
 
   return (
-    <div className="p-4">
-      <RoomSearchBar
-        searchQuery={searchQuery}
-        onSearch={handleSearch}
-        onCreateRoom={() => setShowCreateModal(true)}
-      />
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto p-4">
+        <RoomListHeader />
+        <RoomSearchBar
+          searchQuery={searchQuery}
+          onSearch={handleSearch}
+          onCreateRoom={() => setShowCreateModal(true)}
+        />
 
-      {isLoading ? (
-        <div className="text-center py-4">로딩 중...</div>
-      ) : (
-        <div className="space-y-4">
-          <JoinedRoomList
-            rooms={filteredJoinedRooms}
-            onJoinRoom={handleJoinRoom}
-            onLeaveRoom={handleLeaveRoom}
-            onEnterRoom={handleEnterRoom}
-          />
-          <AvailableRoomList
-            rooms={filteredAvailableRooms}
-            onJoinRoom={handleJoinRoom}
-          />
-        </div>
-      )}
+        {isLoading ? (
+          <div className="text-center py-4">로딩 중...</div>
+        ) : (
+          <div className="space-y-4">
+            <JoinedRoomList
+              rooms={filteredJoinedRooms}
+              onJoinRoom={handleJoinRoom}
+              onLeaveRoom={handleLeaveRoom}
+              onEnterRoom={handleEnterRoom}
+            />
+            <AvailableRoomList
+              rooms={filteredAvailableRooms}
+              onJoinRoom={handleJoinRoom}
+            />
+          </div>
+        )}
 
-      <CreateRoomModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSubmit={handleCreateRoom}
-      />
+        <CreateRoomModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onSubmit={handleCreateRoom}
+        />
+      </div>
     </div>
   );
 };
-
-export default ChatRoomList;

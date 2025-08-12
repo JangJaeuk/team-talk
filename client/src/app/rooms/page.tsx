@@ -1,7 +1,7 @@
 "use client";
 
-import ChatRoomListMain from "@/components/chat/room-list/ChatRoomListMain";
+import { ChatRoomList } from "@/components/chat/room-list/ChatRoomList";
 
 export default function RoomsPage() {
-  return <ChatRoomListMain />;
+  return <ChatRoomList />;
 }

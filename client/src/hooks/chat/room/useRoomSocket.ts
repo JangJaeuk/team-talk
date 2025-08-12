@@ -6,7 +6,7 @@ import { useChatStore } from "@/store/useChatStore";
 import { ChatRoom as ChatRoomType, Message } from "@/types";
 import { useCallback, useEffect, useRef } from "react";
 
-interface UseSocketOptions {
+interface UseRoomSocketOptions {
   onMessage?: (message: Message) => void;
   onRoomJoinSuccess?: (room: ChatRoomType) => void;
   onRoomLeaveSuccess?: () => void;
@@ -18,7 +18,10 @@ interface TypingEvent {
   roomId: string;
 }
 
-export const useSocket = (roomId: string, options: UseSocketOptions = {}) => {
+export const useRoomSocket = (
+  roomId: string,
+  options: UseRoomSocketOptions = {}
+) => {
   const { user } = useAuthStore();
   const { setTypingStatus } = useChatStore();
   const joinedRoom = useRef<string | null>(null);
@@ -94,19 +97,16 @@ export const useSocket = (roomId: string, options: UseSocketOptions = {}) => {
     optionsRef.current.onRoomLeaveSuccess?.();
   }, []);
 
-  const handleNewMessage = useCallback(
-    (message: Message) => {
-      console.log("[Message] 수신:", message.content, "방:", message.roomId);
-      if (message.roomId === roomIdRef.current) {
-        optionsRef.current.onMessage?.(message);
-        // 메시지를 받으면 자동으로 읽음 처리
-        if (socketRef.current && user) {
-          socketRef.current.emit("message:read", message.id);
-        }
+  const handleNewMessage = useCallback((message: Message) => {
+    console.log("[Message] 수신:", message.content, "방:", message.roomId);
+    if (message.roomId === roomIdRef.current) {
+      optionsRef.current.onMessage?.(message);
+      // 메시지를 받으면 자동으로 읽음 처리
+      if (socketRef.current) {
+        socketRef.current.emit("message:read", message.id);
       }
-    },
-    [user]
-  );
+    }
+  }, []);
 
   const handleTypingStart = useCallback(
     (data: TypingEvent) => {
