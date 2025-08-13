@@ -87,7 +87,9 @@ export const ChatRoom = ({ roomId }: Props) => {
             ref={chatContainerRef}
             className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col-reverse p-4"
           >
-            {getTypingMessage()}
+            <div key="typing-indicator" className="text-gray-500 text-sm mb-2">
+              {getTypingMessage()}
+            </div>
 
             {messages.map((msg) =>
               msg.type === "system" ? (
