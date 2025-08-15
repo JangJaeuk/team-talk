@@ -11,9 +11,10 @@ import { setupSocketHandlers } from "./socket/handlers";
 import { ClientToServerEvents, ServerToClientEvents } from "./types";
 
 const app = express();
+
 app.use(
   cors({
-    origin: process.env.NEXT_PUBLIC_CLIENT_URL || "http://localhost:3000",
+    origin: config.corsOrigin,
     credentials: true,
   })
 );
