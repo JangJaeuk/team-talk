@@ -74,9 +74,8 @@ export const useMessages = ({
             }));
 
           if (user && isJoined) {
-            const socket = socketClient.getSocket();
             uniqueNewMessages.forEach((msg: Message) => {
-              socket.emit("message:read", msg.id);
+              socketClient.emitSocket("message:read", msg.id);
             });
           }
 
@@ -111,8 +110,7 @@ export const useMessages = ({
       }
 
       if (user && isJoined) {
-        const socket = socketClient.getSocket();
-        socket.emit("message:read", message.id);
+        socketClient.emitSocket("message:read", message.id);
       }
 
       onNewMessage?.(message);

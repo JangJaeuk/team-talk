@@ -22,7 +22,7 @@ export const LoginForm = () => {
         setIsRegister(false);
       } else {
         await login(email, password);
-        router.push("/rooms");
+        router.replace("/rooms");
       }
     } catch (error) {
       console.error("Auth error:", error);

@@ -20,10 +20,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, [initialize]);
 
-  // mounted가 false일 때는 children의 복사본을 반환하여 hydration 불일치 방지
+  // 초기화가 완료되기 전까지는 아무것도 렌더링하지 않음
   if (!mounted) {
-    return <div style={{ visibility: "hidden" }}>{children}</div>;
+    return null;
   }
 
-  return <div>{children}</div>;
+  return <>{children}</>;
 }

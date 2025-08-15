@@ -18,14 +18,12 @@ export const useRoom = ({ roomId }: UseRoomProps) => {
 
   const handleJoinRoom = () => {
     if (!user) return;
-    const socket = socketClient.getSocket();
-    socket.emit("room:join", roomId);
+    socketClient.emitSocket("room:join", roomId);
   };
 
   const handleLeaveRoom = () => {
     if (!user) return;
-    const socket = socketClient.getSocket();
-    socket.emit("room:leave", roomId);
+    socketClient.emitSocket("room:leave", roomId);
     router.push("/rooms"); // 방 목록으로 이동
   };
 

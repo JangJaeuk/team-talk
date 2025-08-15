@@ -1,14 +1,19 @@
 import { httpClient } from "@/lib/axios";
+import { socketClient } from "@/lib/socket";
 import { User } from "@/types";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { create } from "zustand";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+interface TokenResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: User;
+}
 
 interface AuthState {
   user: User | null;
-  token: string | null;
+  accessToken: string | null;
   isAuthenticated: boolean;
   error: string | null;
 
@@ -30,44 +35,49 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  token: null,
+  accessToken: null,
   isAuthenticated: false,
   error: null,
 
   initialize: async () => {
-    console.log("Initialize function called");
     try {
-      const token = Cookies.get("token");
+      const token = Cookies.get("accessToken");
       console.log("Token from cookies:", token);
       if (!token) {
         console.log("No token found, returning");
         return;
       }
 
-      // 토큰을 상태에 먼저 설정
-      set({ token });
-      console.log("Token set to state");
+      // 소켓 연결 초기화
+      try {
+        await socketClient.connect();
+      } catch (error) {
+        console.error("Socket connection failed:", error);
+        // 소켓 연결 실패 시 로그아웃 처리
+        set({
+          user: null,
+          accessToken: null,
+          isAuthenticated: false,
+          error: null,
+        });
+        return;
+      }
 
-      // 토큰을 헤더에 포함시켜 사용자 정보 요청
-      console.log("Fetching user info");
+      // Access Token으로 사용자 정보 요청
       const response = await httpClient.get<User>("/auth/me");
       const user = response.data;
-      console.log("User info received:", user);
 
       set({
         user,
-        token,
+        accessToken: token,
         isAuthenticated: true,
         error: null,
       });
-      console.log("Auth state updated with user info");
     } catch (error) {
-      console.error("Initialize error:", error);
       // 토큰이 유효하지 않으면 로그아웃
-      Cookies.remove("token");
       set({
         user: null,
-        token: null,
+        accessToken: null,
         isAuthenticated: false,
         error: null,
       });
@@ -76,7 +86,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   register: async (email: string, password: string, nickname: string) => {
     try {
-      await axios.post(`${API_URL}/auth/register`, {
+      await httpClient.post("/auth/register", {
         email,
         password,
         nickname,
@@ -93,19 +103,20 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   login: async (email: string, password: string) => {
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, {
+      const response = await httpClient.post<TokenResponse>("/auth/login", {
         email,
         password,
       });
 
-      const { user, token } = response.data;
+      const { user, accessToken } = response.data;
 
-      // 토큰을 쿠키에 저장 (7일 유효)
-      Cookies.set("token", token, { expires: 7 });
+      // Access Token은 쿠키에 저장 (서버에서 refreshToken은 httpOnly 쿠키로 설정)
+      Cookies.set("accessToken", accessToken, { path: "/" });
 
+      // 상태 업데이트
       set({
         user,
-        token,
+        accessToken,
         isAuthenticated: true,
         error: null,
       });
@@ -120,16 +131,25 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
-    // 쿠키에서 토큰 제거
-    Cookies.remove("token");
+    // Access Token 제거
+
+    // Refresh Token 제거 (서버에 요청)
+    httpClient.post("/auth/logout");
 
     set({
       user: null,
-      token: null,
+      accessToken: null,
       isAuthenticated: false,
       error: null,
     });
   },
 
   setError: (error: string | null) => set({ error }),
+
+  setAccessToken: (accessToken: string | null) =>
+    set((state) => ({
+      ...state,
+      accessToken,
+      isAuthenticated: !!accessToken,
+    })),
 }));

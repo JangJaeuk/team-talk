@@ -12,8 +12,8 @@ export const authMiddleware = async (
       return res.status(401).json({ error: "No token provided" });
     }
 
-    const token = authHeader.split("Bearer ")[1];
-    const decoded = authService.verifyToken(token);
+    const accessToken = authHeader.split("Bearer ")[1];
+    const decoded = authService.verifyAccessToken(accessToken);
 
     // 요청 객체에 사용자 정보 추가
     req.user = {
@@ -25,6 +25,6 @@ export const authMiddleware = async (
     next();
   } catch (error) {
     console.error("Auth middleware error:", error);
-    res.status(401).json({ error: "Invalid token" });
+    res.status(401).json({ error: "Invalid access token" });
   }
 };

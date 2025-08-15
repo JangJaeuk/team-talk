@@ -1,14 +1,24 @@
 import { ClientToServerEvents, ServerToClientEvents } from "@/types";
 import { io, Socket } from "socket.io-client";
 
-class SocketClient {
+import { EventEmitter } from "events";
+
+class SocketClient extends EventEmitter {
   private static instance: SocketClient;
   private socket: Socket<ServerToClientEvents, ClientToServerEvents> | null =
     null;
+  private lastFailedEmit: {
+    event: keyof ClientToServerEvents;
+    args: Parameters<ClientToServerEvents[keyof ClientToServerEvents]>;
+  } | null = null;
+  private refreshAttempts: number = 0;
+  private readonly MAX_REFRESH_ATTEMPTS: number = 3;
   private readonly SOCKET_URL =
     process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:4000";
 
-  private constructor() {}
+  private constructor() {
+    super();
+  }
 
   public static getInstance(): SocketClient {
     if (!SocketClient.instance) {
@@ -20,8 +30,29 @@ class SocketClient {
   private getToken(): string | undefined {
     return document.cookie
       .split("; ")
-      .find((row) => row.startsWith("token="))
+      .find((row) => row.startsWith("accessToken="))
       ?.split("=")[1];
+  }
+
+  private async refreshToken(): Promise<string | null> {
+    try {
+      const response = await fetch(`${this.SOCKET_URL}/api/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        if (response.status === 401) {
+          window.location.href = "/login";
+        }
+        return null;
+      }
+      const data = await response.json();
+      document.cookie = `accessToken=${data.accessToken}; path=/`;
+      return data.accessToken;
+    } catch (error) {
+      console.error("[Socket] Token refresh failed:", error);
+      return null;
+    }
   }
 
   public connect(): Socket<ServerToClientEvents, ClientToServerEvents> {
@@ -43,6 +74,7 @@ class SocketClient {
     }
 
     console.log("[Socket] 새 연결 시도");
+    (this as EventEmitter).emit("socket:beforeConnect");
     this.socket = io(this.SOCKET_URL, {
       auth: { token },
       transports: ["websocket"],
@@ -50,6 +82,7 @@ class SocketClient {
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
       multiplex: false,
+      withCredentials: true,
     });
 
     this.setupEventHandlers();
@@ -62,16 +95,65 @@ class SocketClient {
 
     this.socket.on("connect", () => {
       console.log("[Socket] 연결 성공:", this.socket?.id);
+      this.refreshAttempts = 0; // 연결 성공 시 리프레시 시도 횟수 리셋
+      (this as EventEmitter).emit("socket:connected", this.socket);
+      this.retryLastFailedEmit();
     });
 
     this.socket.on("disconnect", (reason) => {
       console.log("[Socket] 연결 끊김:", reason);
     });
 
-    this.socket.on("connect_error", (error) => {
+    this.socket.on("connect_error", async (error) => {
       console.error("[Socket] 연결 에러:", error.message);
-      if (error.message === "Authentication error") {
-        window.location.href = "/";
+      if (error.message === "Invalid access token") {
+        if (this.refreshAttempts >= this.MAX_REFRESH_ATTEMPTS) {
+          console.error("[Socket] 최대 리프레시 시도 횟수 초과");
+          window.location.href = "/login";
+          return;
+        }
+
+        this.refreshAttempts++;
+        console.log(
+          `[Socket] 토큰 리프레시 시도 ${this.refreshAttempts}/${this.MAX_REFRESH_ATTEMPTS}`
+        );
+
+        // 토큰 갱신 시도
+        const newToken = await this.refreshToken();
+        if (newToken) {
+          // 새 토큰으로 재연결 시도
+          this.disconnect();
+          this.connect();
+        } else {
+          window.location.href = "/login";
+        }
+      } else if (error.message === "Authentication error") {
+        window.location.href = "/login";
+      }
+    });
+
+    // 이벤트 에러 처리
+    this.socket.on("auth:error", async (error) => {
+      console.error("[Socket] 이벤트 에러:", error.message);
+      if (error.message === "Invalid access token") {
+        if (this.refreshAttempts >= this.MAX_REFRESH_ATTEMPTS) {
+          console.error("[Socket] 최대 리프레시 시도 횟수 초과");
+          window.location.href = "/login";
+          return;
+        }
+
+        this.refreshAttempts++;
+        console.log(
+          `[Socket] 토큰 리프레시 시도 ${this.refreshAttempts}/${this.MAX_REFRESH_ATTEMPTS}`
+        );
+
+        const newToken = await this.refreshToken();
+        if (newToken) {
+          this.disconnect();
+          this.connect();
+        } else {
+          window.location.href = "/login";
+        }
       }
     });
   }
@@ -88,13 +170,46 @@ class SocketClient {
     this.socket = null;
   }
 
+  public isConnected(): boolean {
+    return this.socket?.connected || false;
+  }
+
   public getSocket(): Socket<ServerToClientEvents, ClientToServerEvents> {
-    if (!this.socket || !this.socket.connected) {
-      console.log("[Socket] 새 연결 필요");
-      return this.connect();
+    if (!this.socket) {
+      console.log("[Socket] 소켓 연결이 없음");
+      throw new Error("Socket connection required");
     }
-    console.log("[Socket] 기존 소켓 반환:", this.socket.id);
+    console.log("[Socket] 소켓 반환:", this.socket.id);
     return this.socket;
+  }
+
+  public emitSocket<T extends keyof ClientToServerEvents>(
+    event: T,
+    ...args: Parameters<ClientToServerEvents[T]>
+  ): void {
+    if (!this.socket) {
+      console.error("[Socket] 소켓 연결이 없음");
+      throw new Error("Socket connection required");
+    }
+
+    if (!this.socket.connected) {
+      console.log("[Socket] 연결되지 않은 상태에서 emit 시도");
+      this.lastFailedEmit = { event, args };
+      return;
+    }
+
+    this.socket.emit(event, ...args);
+  }
+
+  private retryLastFailedEmit(): void {
+    if (this.lastFailedEmit && this.socket?.connected) {
+      console.log(
+        "[Socket] 마지막 실패한 요청 재시도:",
+        this.lastFailedEmit.event
+      );
+      this.socket.emit(this.lastFailedEmit.event, ...this.lastFailedEmit.args);
+      this.lastFailedEmit = null;
+    }
   }
 }
 

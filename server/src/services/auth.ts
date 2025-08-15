@@ -1,10 +1,23 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { db } from "../config/firebase";
+import {
+  ACCESS_TOKEN_EXPIRES_NUMBER,
+  REFRESH_TOKEN_EXPIRES_NUMBER,
+} from "../constants/auth";
 import { User } from "../types";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+const ACCESS_TOKEN_SECRET =
+  process.env.ACCESS_TOKEN_SECRET || "access-token-secret";
+const REFRESH_TOKEN_SECRET =
+  process.env.REFRESH_TOKEN_SECRET || "refresh-token-secret";
 const SALT_ROUNDS = 10;
+
+// 토큰 만료 시간 설정
+const ACCESS_TOKEN_EXPIRES_IN = `${ACCESS_TOKEN_EXPIRES_NUMBER}m`;
+const REFRESH_TOKEN_EXPIRES_IN = `${REFRESH_TOKEN_EXPIRES_NUMBER}d`;
+
+// JWT 기반 인증만 사용
 
 export const authService = {
   // 사용자 등록
@@ -12,7 +25,7 @@ export const authService = {
     email: string,
     password: string,
     nickname: string
-  ): Promise<{ user: User; token: string }> {
+  ): Promise<{ user: User; accessToken: string; refreshToken: string }> {
     try {
       // 이메일 중복 체크
       const existingUser = await db
@@ -43,10 +56,11 @@ export const authService = {
         isOnline: true,
       };
 
-      // JWT 토큰 생성
-      const token = this.generateToken(user);
+      // Access Token과 Refresh Token 생성
+      const accessToken = this.generateAccessToken(user);
+      const refreshToken = this.generateRefreshToken(user);
 
-      return { user, token };
+      return { user, accessToken, refreshToken };
     } catch (error) {
       console.error("Error registering user:", error);
       throw error;
@@ -57,7 +71,7 @@ export const authService = {
   async login(
     email: string,
     password: string
-  ): Promise<{ user: User; token: string }> {
+  ): Promise<{ user: User; accessToken: string; refreshToken: string }> {
     try {
       // 사용자 찾기
       const userSnapshot = await db
@@ -91,36 +105,74 @@ export const authService = {
         lastSeen: new Date(),
       });
 
-      // JWT 토큰 생성
-      const token = this.generateToken(user);
+      // Access Token과 Refresh Token 생성
+      const accessToken = this.generateAccessToken(user);
+      const refreshToken = this.generateRefreshToken(user);
 
-      return { user, token };
+      return { user, accessToken, refreshToken };
     } catch (error) {
       console.error("Error logging in:", error);
       throw error;
     }
   },
 
-  // JWT 토큰 생성
-  generateToken(user: User): string {
+  // Access Token 생성
+  generateAccessToken(user: User): string {
     return jwt.sign(
       {
         uid: user.id,
         email: user.email,
         nickname: user.nickname,
+        type: "access",
       },
-      JWT_SECRET,
-      { expiresIn: "7d" }
+      ACCESS_TOKEN_SECRET,
+      { expiresIn: ACCESS_TOKEN_EXPIRES_IN }
     );
   },
 
-  // 토큰 검증
-  verifyToken(token: string): jwt.JwtPayload {
+  // Refresh Token 생성
+  generateRefreshToken(user: User): string {
+    return jwt.sign(
+      {
+        uid: user.id,
+        type: "refresh",
+      },
+      REFRESH_TOKEN_SECRET,
+      { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
+    );
+  },
+
+  // Access Token 검증
+  verifyAccessToken(token: string): jwt.JwtPayload {
     try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      return decoded as jwt.JwtPayload;
+      const decoded = jwt.verify(token, ACCESS_TOKEN_SECRET) as jwt.JwtPayload;
+      if (decoded.type !== "access") {
+        throw new Error("Invalid token type");
+      }
+      return decoded;
     } catch (error) {
-      throw new Error("Invalid token");
+      throw new Error("Invalid access token");
     }
+  },
+
+  // Refresh Token 검증
+  verifyRefreshToken(token: string): jwt.JwtPayload {
+    try {
+      const decoded = jwt.verify(token, REFRESH_TOKEN_SECRET) as jwt.JwtPayload;
+      if (decoded.type !== "refresh") {
+        throw new Error("Invalid token type");
+      }
+
+      // JWT 검증만 수행
+
+      return decoded;
+    } catch (error) {
+      throw new Error("Invalid refresh token");
+    }
+  },
+
+  // Refresh Token 삭제 (클라이언트에서 쿠키 삭제)
+  removeRefreshToken(userId: string): void {
+    // 저장소 없이 JWT만 사용하므로 서버에서는 별도 처리 없음
   },
 };

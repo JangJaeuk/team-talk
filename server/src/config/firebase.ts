@@ -13,7 +13,18 @@ const app = admin.initializeApp({
 });
 
 // Firestore 인스턴스 가져오기
-export const db = getFirestore(app);
+const db = getFirestore(app);
+
+// 개발 환경에서 에뮬레이터 연결
+if (process.env.NODE_ENV === "development") {
+  console.log("Connecting to Firestore emulator on localhost:9090");
+  db.settings({
+    host: "localhost:9090",
+    ssl: false,
+  });
+}
+
+export { db };
 
 // Auth 인스턴스 가져오기
 export const auth = getAuth(app);

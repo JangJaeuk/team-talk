@@ -56,6 +56,7 @@ export interface ServerToClientEvents {
   "room:participant:update": (roomId: string, participants: string[]) => void;
   "typing:start": (data: { userId: string; roomId: string }) => void;
   "typing:stop": (data: { userId: string; roomId: string }) => void;
+  "auth:error": (error: { message: string }) => void;
 }
 
 export interface ClientToServerEvents {

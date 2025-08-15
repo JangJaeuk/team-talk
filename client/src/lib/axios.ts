@@ -1,8 +1,15 @@
 import axios, { AxiosInstance } from "axios";
 
+interface TokenResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
 class HttpClient {
   private static instance: HttpClient;
   private api: AxiosInstance;
+  private refreshing: boolean = false;
+  private refreshSubscribers: ((token: string) => void)[] = [];
   private readonly API_URL =
     process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
@@ -12,6 +19,7 @@ class HttpClient {
       headers: {
         "Content-Type": "application/json",
       },
+      withCredentials: true,
     });
 
     this.setupInterceptors();
@@ -25,12 +33,12 @@ class HttpClient {
   }
 
   private setupInterceptors(): void {
-    // 요청 인터셉터 - 토큰 추가
+    // 요청 인터셉터 - Access Token 추가
     this.api.interceptors.request.use(
       (config) => {
-        const token = this.getToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+        const accessToken = this.getAccessToken();
+        if (accessToken) {
+          config.headers.Authorization = `Bearer ${accessToken}`;
         }
         return config;
       },
@@ -39,28 +47,85 @@ class HttpClient {
       }
     );
 
-    // 응답 인터셉터 - 401 에러 처리
+    // 응답 인터셉터 - 토큰 갱신 처리
     this.api.interceptors.response.use(
       (response) => response,
-      (error) => {
-        if (error.response?.status === 401) {
-          this.handleUnauthorized();
+      async (error) => {
+        const originalRequest = error.config;
+
+        // Access Token이 없거나 만료된 경우 refresh 시도
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          if (this.refreshing) {
+            // 토큰 갱신 중이면 대기
+            return new Promise((resolve) => {
+              this.refreshSubscribers.push((token: string) => {
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+                resolve(this.api(originalRequest));
+              });
+            });
+          }
+
+          originalRequest._retry = true;
+          this.refreshing = true;
+
+          try {
+            const token = await this.refreshAccessToken();
+            if (token) {
+              // 대기 중인 요청들 처리
+              this.onRefreshSuccess(token);
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              return this.api(originalRequest);
+            }
+          } catch (error) {
+            this.onRefreshFailure(error);
+            return Promise.reject(error);
+          } finally {
+            this.refreshing = false;
+          }
         }
+
         return Promise.reject(error);
       }
     );
   }
 
-  private getToken(): string | undefined {
+  private async refreshAccessToken(): Promise<string | null> {
+    try {
+      const response = await this.api.post<TokenResponse>("/auth/refresh");
+      const { accessToken } = response.data;
+      this.setAccessToken(accessToken);
+      return accessToken;
+    } catch (error) {
+      this.handleUnauthorized();
+      return null;
+    }
+  }
+
+  private onRefreshSuccess(token: string): void {
+    this.refreshSubscribers.forEach((callback) => callback(token));
+    this.refreshSubscribers = [];
+  }
+
+  private onRefreshFailure(error: unknown): void {
+    this.refreshSubscribers = [];
+    this.handleUnauthorized();
+  }
+
+  private getAccessToken(): string | undefined {
     return document.cookie
       .split("; ")
-      .find((row) => row.startsWith("token="))
+      .find((row) => row.startsWith("accessToken="))
       ?.split("=")[1];
   }
 
+  private setAccessToken(token: string): void {
+    document.cookie = `accessToken=${token}; path=/`;
+  }
+
   private handleUnauthorized(): void {
-    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-    window.location.href = "/";
+    document.cookie =
+      "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+    window.location.href = "/login";
   }
 
   // API 메서드들
