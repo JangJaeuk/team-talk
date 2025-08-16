@@ -1,4 +1,5 @@
 import { Request, Router } from "express";
+import { config } from "../config";
 import { db } from "../config/firebase";
 import { REFRESH_TOKEN_EXPIRES_NUMBER } from "../constants/auth";
 import { authMiddleware } from "../middleware/auth";
@@ -19,8 +20,9 @@ router.post("/register", async (req, res) => {
     // Refresh Token을 HttpOnly 쿠키로 설정
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: !config.isDevelopment,
+      sameSite: config.isDevelopment ? "lax" : "none",
+      domain: config.cookieDomain,
       maxAge: REFRESH_TOKEN_EXPIRES_NUMBER * 24 * 60 * 60 * 1000, // 14일
     });
 
@@ -42,8 +44,9 @@ router.post("/login", async (req, res) => {
     // Refresh Token을 HttpOnly 쿠키로 설정
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: !config.isDevelopment,
+      sameSite: config.isDevelopment ? "lax" : "none",
+      domain: config.cookieDomain,
       maxAge: REFRESH_TOKEN_EXPIRES_NUMBER * 24 * 60 * 60 * 1000, // 14일
     });
 

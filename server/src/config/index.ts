@@ -5,5 +5,6 @@ dotenv.config();
 export const config = {
   port: process.env.PORT || 4000,
   corsOrigin: process.env.CLIENT_URL || "http://localhost:3000",
-  // 추후 필요한 설정들 추가
+  cookieDomain: process.env.COOKIE_DOMAIN || "localhost",
+  isDevelopment: process.env.NODE_ENV === "development",
 } as const;
