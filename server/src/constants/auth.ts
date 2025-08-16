@@ -1,4 +1,4 @@
 // 15분
-export const ACCESS_TOKEN_EXPIRES_NUMBER = 1;
+export const ACCESS_TOKEN_EXPIRES_NUMBER = 15;
 // 14일
 export const REFRESH_TOKEN_EXPIRES_NUMBER = 14;
