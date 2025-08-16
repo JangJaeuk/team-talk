@@ -41,7 +41,31 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   initialize: async () => {
     try {
-      const token = Cookies.get("accessToken");
+      let token = Cookies.get("accessToken");
+
+      // 액세스 토큰이 없고 리프레시 토큰이 있으면 재발급 시도
+      const refreshToken = Cookies.get("refreshToken");
+      if (!token && refreshToken) {
+        try {
+          const response = await httpClient.post<TokenResponse>(
+            "/auth/refresh",
+            {
+              refreshToken,
+            }
+          );
+          token = response.data.accessToken;
+
+          // 새로운 액세스 토큰 저장
+          Cookies.set("accessToken", token, {
+            path: "/",
+            secure: true,
+            sameSite: "none",
+          });
+        } catch (error) {
+          return; // 리프레시 실패시 종료
+        }
+      }
+
       if (!token) {
         return;
       }

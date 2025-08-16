@@ -99,8 +99,10 @@ class HttpClient {
         return null;
       }
 
-      // refreshToken은 쿠키로 전송됨
-      const response = await this.api.post<TokenResponse>("/auth/refresh");
+      // refreshToken을 요청 바디에 포함
+      const response = await this.api.post<TokenResponse>("/auth/refresh", {
+        refreshToken,
+      });
 
       const { accessToken } = response.data;
       this.setAccessToken(accessToken);
