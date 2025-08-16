@@ -1,7 +1,5 @@
 import { Request, Router } from "express";
-import { config } from "../config";
 import { db } from "../config/firebase";
-import { REFRESH_TOKEN_EXPIRES_NUMBER } from "../constants/auth";
 import { authMiddleware } from "../middleware/auth";
 import { authService } from "../services/auth";
 
@@ -17,16 +15,7 @@ router.post("/register", async (req, res) => {
       nickname
     );
 
-    // Refresh Token을 HttpOnly 쿠키로 설정
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: !config.isDevelopment,
-      sameSite: config.isDevelopment ? "lax" : "none",
-      domain: config.cookieDomain,
-      maxAge: REFRESH_TOKEN_EXPIRES_NUMBER * 24 * 60 * 60 * 1000, // 14일
-    });
-
-    res.json({ user, accessToken });
+    res.json({ user, accessToken, refreshToken });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
@@ -41,16 +30,7 @@ router.post("/login", async (req, res) => {
       password
     );
 
-    // Refresh Token을 HttpOnly 쿠키로 설정
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: !config.isDevelopment,
-      sameSite: config.isDevelopment ? "lax" : "none",
-      domain: config.cookieDomain,
-      maxAge: REFRESH_TOKEN_EXPIRES_NUMBER * 24 * 60 * 60 * 1000, // 14일
-    });
-
-    res.json({ user, accessToken });
+    res.json({ user, accessToken, refreshToken });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }

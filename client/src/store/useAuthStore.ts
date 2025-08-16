@@ -108,10 +108,21 @@ export const useAuthStore = create<AuthState>((set) => ({
         password,
       });
 
-      const { user, accessToken } = response.data;
+      const { user, accessToken, refreshToken } = response.data;
 
-      // Access Token은 쿠키에 저장 (서버에서 refreshToken은 httpOnly 쿠키로 설정)
-      Cookies.set("accessToken", accessToken, { path: "/" });
+      // Access Token과 Refresh Token을 쿠키에 저장
+      Cookies.set("accessToken", accessToken, {
+        path: "/",
+        secure: true,
+        sameSite: "none",
+      });
+      Cookies.set("refreshToken", refreshToken, {
+        path: "/",
+        secure: true,
+        sameSite: "none",
+        // 14일
+        expires: 14,
+      });
 
       // 상태 업데이트
       set({
@@ -131,9 +142,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
-    // Access Token 제거
+    // Access Token과 Refresh Token 제거
+    Cookies.remove("accessToken", { path: "/" });
+    Cookies.remove("refreshToken", { path: "/" });
 
-    // Refresh Token 제거 (서버에 요청)
+    // 서버에 로그아웃 알림
     httpClient.post("/auth/logout");
 
     set({
