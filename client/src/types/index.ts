@@ -22,18 +22,12 @@ export interface Message {
   content: string;
   roomId: string;
   sender: User;
-  createdAt: {
-    _seconds: number;
-    _nanoseconds: number;
-  };
+  createdAt: Date;
   isEdited: boolean;
   type?: "normal" | "system";
   readBy: {
     userId: string;
-    readAt: {
-      _seconds: number;
-      _nanoseconds: number;
-    };
+    readAt: Date;
   }[];
 }
 

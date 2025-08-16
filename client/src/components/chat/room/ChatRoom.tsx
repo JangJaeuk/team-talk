@@ -5,6 +5,7 @@ import { useRoom } from "@/hooks/chat/room/useRoom";
 import { useRoomSocket } from "@/hooks/chat/room/useRoomSocket";
 import { useTyping } from "@/hooks/chat/room/useTyping";
 import { useAuthStore } from "@/store/useAuthStore";
+import { formatDate, isSameDay } from "@/utils/date";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MessageForm } from "./form/MessageForm";
@@ -91,23 +92,50 @@ export const ChatRoom = ({ roomId }: Props) => {
               {getTypingMessage()}
             </div>
 
-            {messages.map((msg) =>
-              msg.type === "system" ? (
-                <SystemMessage key={msg.id} message={msg} />
-              ) : (
-                <UserMessage
-                  key={msg.id}
-                  message={msg}
-                  userId={user?.id}
-                  formatTimestamp={formatTimestamp}
-                  activeMenuMessageId={activeMenuMessageId}
-                  MessageSettingsMenu={MessageSettingsMenu}
-                  participants={room?.participants || []}
-                  messages={messages}
-                  setActiveMenuMessageId={setActiveMenuMessageId}
-                />
-              )
-            )}
+            {messages.map((msg, index) => {
+              const currentDate = new Date(msg.createdAt);
+              const prevMessage = messages[index + 1]; // 역순으로 렌더링되므로 이전 메시지는 index + 1
+              const prevDate = prevMessage
+                ? new Date(prevMessage.createdAt)
+                : null;
+
+              // 날짜가 바뀌는 지점이거나 첫 메시지인 경우 날짜 구분선 추가
+              const showDateDivider =
+                !prevDate || !isSameDay(currentDate, prevDate);
+
+              return (
+                <div key={msg.id}>
+                  {showDateDivider && (
+                    <SystemMessage
+                      message={{
+                        id: `date-${msg.id}`,
+                        content: formatDate(currentDate),
+                        type: "system",
+                        sender: msg.sender,
+                        roomId: msg.roomId,
+                        createdAt: msg.createdAt,
+                        isEdited: false,
+                        readBy: [],
+                      }}
+                    />
+                  )}
+                  {msg.type === "system" ? (
+                    <SystemMessage message={msg} />
+                  ) : (
+                    <UserMessage
+                      message={msg}
+                      userId={user?.id}
+                      formatTimestamp={formatTimestamp}
+                      activeMenuMessageId={activeMenuMessageId}
+                      MessageSettingsMenu={MessageSettingsMenu}
+                      participants={room?.participants || []}
+                      messages={messages}
+                      setActiveMenuMessageId={setActiveMenuMessageId}
+                    />
+                  )}
+                </div>
+              );
+            })}
 
             {hasMore && (
               <div ref={loadMoreRef} className="text-center py-4">

@@ -1,6 +1,16 @@
 import { db } from "../config/firebase";
 import { ChatRoom, Message, User } from "../types";
 
+// Firestore 타임스탬프를 Date로 변환
+const convertToDate = (timestamp: {
+  _seconds: number;
+  _nanoseconds: number;
+}): Date => {
+  return new Date(
+    timestamp._seconds * 1000 + (timestamp._nanoseconds || 0) / 1000000
+  );
+};
+
 // 채팅방 관련 서비스
 export const roomService = {
   // 채팅방 생성
@@ -19,13 +29,14 @@ export const roomService = {
       .orderBy("createdAt", "desc")
       .get();
 
-    const rooms = snapshot.docs.map(
-      (doc) =>
-        ({
-          id: doc.id,
-          ...doc.data(),
-        } as ChatRoom)
-    );
+    const rooms = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: convertToDate(data.createdAt),
+      } as ChatRoom;
+    });
 
     // 각 방의 최신 메시지와 읽지 않은 메시지 수 가져오기
     const roomsWithDetails = await Promise.all(
@@ -39,10 +50,14 @@ export const roomService = {
           .get();
 
         const lastMessage = messageSnapshot.docs[0]
-          ? ({
-              id: messageSnapshot.docs[0].id,
-              ...messageSnapshot.docs[0].data(),
-            } as Message)
+          ? (() => {
+              const data = messageSnapshot.docs[0].data();
+              return {
+                id: messageSnapshot.docs[0].id,
+                ...data,
+                createdAt: convertToDate(data.createdAt),
+              } as Message;
+            })()
           : null;
 
         // 읽지 않은 메시지 수 계산
@@ -242,13 +257,18 @@ export const messageService = {
       .orderBy("createdAt", "asc")
       .get();
 
-    return snapshot.docs.map(
-      (doc) =>
-        ({
-          id: doc.id,
-          ...doc.data(),
-        } as Message)
-    );
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: convertToDate(data.createdAt),
+        readBy: (data.readBy || []).map((read: any) => ({
+          ...read,
+          readAt: convertToDate(read.readAt),
+        })),
+      } as Message;
+    });
   },
 
   async getMessages(
@@ -276,10 +296,18 @@ export const messageService = {
 
       // 실제로 요청한 것보다 1개 더 많은 문서를 가져와서 다음 페이지 존재 여부 확인
       const snapshot = await query.limit(limit + 1).get();
-      const messages = snapshot.docs.slice(0, limit).map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const messages = snapshot.docs.slice(0, limit).map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: convertToDate(data.createdAt),
+          readBy: (data.readBy || []).map((read: any) => ({
+            ...read,
+            readAt: convertToDate(read.readAt),
+          })),
+        } as Message;
+      });
 
       // limit + 1개의 문서가 있다면 다음 페이지가 존재
       const hasNextPage = snapshot.docs.length > limit;

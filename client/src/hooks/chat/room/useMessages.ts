@@ -2,6 +2,7 @@ import { httpClient } from "@/lib/axios";
 import { socketClient } from "@/lib/socket";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { Message } from "@/types";
+import { formatTime } from "@/utils/date";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
 
@@ -119,10 +120,7 @@ export const useMessages = ({
   );
 
   const formatTimestamp = (timestamp: Message["createdAt"]) => {
-    const date = new Date(
-      timestamp._seconds * 1000 + timestamp._nanoseconds / 1000000
-    );
-    return date.toLocaleString();
+    return formatTime(new Date(timestamp));
   };
 
   // 초기 메시지 로드 및 무한 스크롤 처리
