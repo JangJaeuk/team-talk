@@ -1,7 +1,7 @@
 import { ClientToServerEvents, ServerToClientEvents } from "@/types";
-import { io, Socket } from "socket.io-client";
-
 import { EventEmitter } from "events";
+import Cookies from "js-cookie";
+import { io, Socket } from "socket.io-client";
 
 class SocketClient extends EventEmitter {
   private static instance: SocketClient;
@@ -28,10 +28,7 @@ class SocketClient extends EventEmitter {
   }
 
   private getToken(): string | undefined {
-    return document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("accessToken="))
-      ?.split("=")[1];
+    return Cookies.get("accessToken");
   }
 
   private async refreshToken(): Promise<string | null> {
@@ -47,7 +44,11 @@ class SocketClient extends EventEmitter {
         return null;
       }
       const data = await response.json();
-      document.cookie = `accessToken=${data.accessToken}; path=/`;
+      Cookies.set("accessToken", data.accessToken, {
+        path: "/",
+        secure: true,
+        sameSite: "none",
+      });
       return data.accessToken;
     } catch (error) {
       console.error("[Socket] Token refresh failed:", error);

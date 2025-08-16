@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from "axios";
+import Cookies from "js-cookie";
 
 interface TokenResponse {
   accessToken: string;
@@ -91,10 +92,7 @@ class HttpClient {
 
   private async refreshAccessToken(): Promise<string | null> {
     try {
-      const refreshToken = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("refreshToken="))
-        ?.split("=")[1];
+      const refreshToken = Cookies.get("refreshToken");
 
       if (!refreshToken) {
         this.handleUnauthorized();
@@ -124,19 +122,23 @@ class HttpClient {
   }
 
   private getAccessToken(): string | undefined {
-    return document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("accessToken="))
-      ?.split("=")[1];
+    return Cookies.get("accessToken");
   }
 
   private setAccessToken(token: string): void {
-    document.cookie = `accessToken=${token}; path=/`;
+    Cookies.set("accessToken", token, {
+      path: "/",
+      secure: true,
+      sameSite: "none",
+    });
   }
 
   private handleUnauthorized(): void {
-    document.cookie =
-      "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+    Cookies.remove("accessToken", {
+      path: "/",
+      secure: true,
+      sameSite: "none",
+    });
     window.location.href = "/login";
   }
 

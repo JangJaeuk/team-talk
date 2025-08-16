@@ -42,9 +42,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   initialize: async () => {
     try {
       const token = Cookies.get("accessToken");
-      console.log("Token from cookies:", token);
       if (!token) {
-        console.log("No token found, returning");
         return;
       }
 
@@ -120,8 +118,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         path: "/",
         secure: true,
         sameSite: "none",
-        // 14일
-        expires: 14,
+        expires: 14, // 14일
       });
 
       // 상태 업데이트
@@ -143,8 +140,16 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: () => {
     // Access Token과 Refresh Token 제거
-    Cookies.remove("accessToken", { path: "/" });
-    Cookies.remove("refreshToken", { path: "/" });
+    Cookies.remove("accessToken", {
+      path: "/",
+      secure: true,
+      sameSite: "none",
+    });
+    Cookies.remove("refreshToken", {
+      path: "/",
+      secure: true,
+      sameSite: "none",
+    });
 
     // 서버에 로그아웃 알림
     httpClient.post("/auth/logout");
