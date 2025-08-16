@@ -40,6 +40,7 @@ router.post("/login", async (req, res) => {
 router.post("/refresh", async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
+
     if (!refreshToken) {
       return res.status(401).json({ error: "No refresh token" });
     }

@@ -91,7 +91,19 @@ class HttpClient {
 
   private async refreshAccessToken(): Promise<string | null> {
     try {
+      const refreshToken = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("refreshToken="))
+        ?.split("=")[1];
+
+      if (!refreshToken) {
+        this.handleUnauthorized();
+        return null;
+      }
+
+      // refreshToken은 쿠키로 전송됨
       const response = await this.api.post<TokenResponse>("/auth/refresh");
+
       const { accessToken } = response.data;
       this.setAccessToken(accessToken);
       return accessToken;
