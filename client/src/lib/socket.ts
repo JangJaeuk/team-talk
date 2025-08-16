@@ -33,17 +33,9 @@ class SocketClient extends EventEmitter {
 
   private async refreshToken(): Promise<string | null> {
     try {
-      const refreshToken = Cookies.get("refreshToken");
-      if (!refreshToken) {
-        return null;
-      }
-
       const response = await fetch(`${this.SOCKET_URL}/api/auth/refresh`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ refreshToken }),
+        credentials: "include",
       });
       if (!response.ok) {
         if (response.status === 401) {

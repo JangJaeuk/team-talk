@@ -1,5 +1,6 @@
 import { Request, Router } from "express";
 import { db } from "../config/firebase";
+import { REFRESH_TOKEN_EXPIRES_NUMBER } from "../constants/auth";
 import { authMiddleware } from "../middleware/auth";
 import { authService } from "../services/auth";
 
@@ -14,6 +15,14 @@ router.post("/register", async (req, res) => {
       password,
       nickname
     );
+
+    // Refresh Token을 HttpOnly 쿠키로 설정
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: REFRESH_TOKEN_EXPIRES_NUMBER * 24 * 60 * 60 * 1000, // 14일
+    });
 
     res.json({ user, accessToken, refreshToken });
   } catch (error: any) {
@@ -30,6 +39,14 @@ router.post("/login", async (req, res) => {
       password
     );
 
+    // Refresh Token을 HttpOnly 쿠키로 설정
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: REFRESH_TOKEN_EXPIRES_NUMBER * 24 * 60 * 60 * 1000, // 14일
+    });
+
     res.json({ user, accessToken, refreshToken });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -39,7 +56,10 @@ router.post("/login", async (req, res) => {
 // 토큰 갱신
 router.post("/refresh", async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      return res.status(401).json({ error: "No refresh token" });
+    }
 
     if (!refreshToken) {
       return res.status(401).json({ error: "No refresh token" });

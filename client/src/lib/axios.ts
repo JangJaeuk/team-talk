@@ -92,17 +92,8 @@ class HttpClient {
 
   private async refreshAccessToken(): Promise<string | null> {
     try {
-      const refreshToken = Cookies.get("refreshToken");
-
-      if (!refreshToken) {
-        this.handleUnauthorized();
-        return null;
-      }
-
-      // refreshToken을 요청 바디에 포함
-      const response = await this.api.post<TokenResponse>("/auth/refresh", {
-        refreshToken,
-      });
+      // 서버에서 httpOnly 쿠키의 refreshToken을 사용
+      const response = await this.api.post<TokenResponse>("/auth/refresh");
 
       const { accessToken } = response.data;
       this.setAccessToken(accessToken);
