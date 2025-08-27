@@ -24,7 +24,7 @@ export const CreateRoomModal = ({ isOpen, onClose, onSubmit }: Props) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="fixed inset-0 backdrop-blur-[2px] bg-black/30 flex items-center justify-center">
       <div className="bg-white p-6 rounded-lg w-96">
         <h2 className="text-xl font-bold mb-4">새 채팅방 만들기</h2>
         <input
