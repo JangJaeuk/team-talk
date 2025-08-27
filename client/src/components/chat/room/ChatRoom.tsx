@@ -6,6 +6,7 @@ import { useRoomSocket } from "@/hooks/chat/room/useRoomSocket";
 import { useTyping } from "@/hooks/chat/room/useTyping";
 import { useAuthStore } from "@/store/useAuthStore";
 import { formatDate, isSameDay } from "@/utils/date";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ChatRoomSkeleton } from "./ChatRoomSkeleton";
@@ -34,7 +35,6 @@ export const ChatRoom = ({ roomId }: Props) => {
   // 메시지 관련 로직
   const {
     messages,
-    isLoading,
     hasMore,
     loadMoreRef,
     handleNewMessage,
@@ -144,8 +144,11 @@ export const ChatRoom = ({ roomId }: Props) => {
             })}
 
             {hasMore && (
-              <div ref={loadMoreRef} className="text-center py-4">
-                {isLoading ? "메시지 불러오는 중..." : "이전 메시지 불러오기"}
+              <div
+                ref={loadMoreRef}
+                className="sticky bottom-0 left-0 right-0 flex justify-center py-4 bg-white/80 backdrop-blur-sm"
+              >
+                <div className="h-8 w-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
               </div>
             )}
 

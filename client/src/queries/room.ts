@@ -5,6 +5,7 @@ export const roomKeys = {
   all: ["rooms"] as const,
   lists: () => [...roomKeys.all, "list"] as const,
   list: (filters: string) => [...roomKeys.lists(), { filters }] as const,
+  detail: (roomId: string) => [...roomKeys.all, "detail", roomId] as const,
 };
 
 export const roomQueries = {
@@ -12,6 +13,13 @@ export const roomQueries = {
     queryKey: roomKeys.lists(),
     queryFn: async () => {
       const response = await httpClient.get<Room[]>("/rooms");
+      return response.data;
+    },
+  }),
+  detail: (roomId: string) => ({
+    queryKey: roomKeys.detail(roomId),
+    queryFn: async () => {
+      const response = await httpClient.get<Room>(`/rooms/${roomId}`);
       return response.data;
     },
   }),

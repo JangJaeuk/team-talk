@@ -1,9 +1,10 @@
-import { httpClient } from "@/lib/axios";
 import { socketClient } from "@/lib/socket";
+import { roomKeys, roomQueries } from "@/queries/room";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { ChatRoom } from "@/types";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 
 interface UseRoomProps {
   roomId: string;
@@ -11,8 +12,13 @@ interface UseRoomProps {
 
 export const useRoom = ({ roomId }: UseRoomProps) => {
   const { user } = useAuthStore();
-  const [room, setRoom] = useState<ChatRoom | null>(null);
   const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const { data: room } = useQuery({
+    ...roomQueries.detail(roomId),
+    enabled: !!roomId,
+  });
 
   const isJoined = room?.participants.includes(user?.id || "") ?? false;
 
@@ -27,18 +33,12 @@ export const useRoom = ({ roomId }: UseRoomProps) => {
     router.push("/rooms"); // 방 목록으로 이동
   };
 
-  const fetchRoomInfo = useCallback(async () => {
-    try {
-      const response = await httpClient.get<ChatRoom>(`/rooms/${roomId}`);
-      setRoom(response.data);
-    } catch (error) {
-      console.error("Error fetching room info:", error);
-    }
-  }, [roomId]);
-
-  useEffect(() => {
-    fetchRoomInfo();
-  }, [roomId]);
+  const setRoom = useCallback(
+    (updatedRoom: ChatRoom) => {
+      queryClient.setQueryData(roomKeys.detail(roomId), updatedRoom);
+    },
+    [queryClient, roomId]
+  );
 
   return {
     room,
