@@ -6,6 +6,7 @@ import { httpClient } from "@/lib/axios";
 import { RoomFormData } from "@/types/room";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
+import { ChatRoomListSkeleton } from "./ChatRoomListSkeleton";
 import { RoomListHeader } from "./layout/RoomListHeader";
 import { AvailableRoomList } from "./list/AvailableRoomList";
 import { JoinedRoomList } from "./list/JoinedRoomList";
@@ -68,7 +69,7 @@ export const ChatRoomList = () => {
         />
 
         {isLoading ? (
-          <div className="text-center py-4">로딩 중...</div>
+          <ChatRoomListSkeleton />
         ) : (
           <div className="space-y-4">
             <JoinedRoomList
