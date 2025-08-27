@@ -2,8 +2,9 @@
 
 import { useRoomList } from "@/hooks/chat/room-list/useRoomList";
 import { useRoomListSocket } from "@/hooks/chat/room-list/useRoomListSocket";
-import { httpClient } from "@/lib/axios";
+import { roomKeys, roomMutations } from "@/queries/room";
 import { RoomFormData } from "@/types/room";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { ChatRoomListSkeleton } from "./ChatRoomListSkeleton";
@@ -33,20 +34,32 @@ export const ChatRoomList = () => {
     getAvailableRooms,
   } = useRoomList();
 
+  const wrappedFetchRooms = async () => {
+    await fetchRooms();
+  };
+
   const { handleJoinRoom, handleLeaveRoom, handleEnterRoom } =
     useRoomListSocket({
       onJoinRoom,
-      fetchRooms,
+      fetchRooms: wrappedFetchRooms,
     });
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
   };
 
+  const queryClient = useQueryClient();
+  const { mutateAsync: createRoom } = useMutation({
+    ...roomMutations.create(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: roomKeys.lists() });
+      setShowCreateModal(false);
+    },
+  });
+
   const handleCreateRoom = async (data: RoomFormData) => {
     try {
-      await httpClient.post("/rooms", data);
-      setShowCreateModal(false);
+      await createRoom(data);
     } catch (error) {
       console.error("Failed to create room:", error);
     }

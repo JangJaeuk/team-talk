@@ -1,25 +1,20 @@
-import { httpClient } from "@/lib/axios";
+import { roomQueries } from "@/queries/room";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useChatStore } from "@/store/useChatStore";
 import { Room } from "@/types/room";
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useCallback } from "react";
 
 export const useRoomList = () => {
-  const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuthStore();
-  const { rooms, setRooms } = useChatStore();
 
-  const fetchRooms = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const response = await httpClient.get<Room[]>("/rooms");
-      setRooms(response.data);
-    } catch (error) {
-      console.error("Failed to fetch rooms:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [setRooms]);
+  const {
+    data: rooms = [],
+    isLoading,
+    refetch: fetchRooms,
+  } = useQuery({
+    ...roomQueries.list(),
+    enabled: !!user,
+  });
 
   const filterRoomsByQuery = useCallback((rooms: Room[], query: string) => {
     return rooms.filter((room) =>
@@ -34,10 +29,6 @@ export const useRoomList = () => {
   const getAvailableRooms = useCallback(() => {
     return rooms.filter((room) => !room.participants.includes(user?.id || ""));
   }, [rooms, user?.id]);
-
-  useEffect(() => {
-    fetchRooms();
-  }, []); // fetchRooms가 메모이제이션되어 있으므로 안전
 
   return {
     rooms,
