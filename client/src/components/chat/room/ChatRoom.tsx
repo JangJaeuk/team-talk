@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { formatDate, isSameDay } from "@/utils/date";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ChatRoomSkeleton } from "./ChatRoomSkeleton";
 import { MessageForm } from "./form/MessageForm";
 import { ChatRoomHeader } from "./layout/ChatRoomHeader";
 import { MessageSettingsMenu } from "./message/MessageSettingsMenu";
@@ -73,6 +74,11 @@ export const ChatRoom = ({ roomId }: Props) => {
     setNewMessage("");
   };
 
+  // 방 정보 로딩 중일 때 스켈레톤 UI 표시
+  if (!room) {
+    return <ChatRoomSkeleton />;
+  }
+
   return (
     <div className="flex flex-col h-screen">
       <ChatRoomHeader
@@ -94,7 +100,7 @@ export const ChatRoom = ({ roomId }: Props) => {
 
             {messages.map((msg, index) => {
               const currentDate = new Date(msg.createdAt);
-              const prevMessage = messages[index + 1]; // 역순으로 렌더링되므로 이전 메시지는 index + 1
+              const prevMessage = messages[index + 1];
               const prevDate = prevMessage
                 ? new Date(prevMessage.createdAt)
                 : null;
