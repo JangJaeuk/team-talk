@@ -4,7 +4,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import type { ChatRoom } from "@/types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 interface UseRoomProps {
   roomId: string;
@@ -20,7 +20,10 @@ export const useRoom = ({ roomId }: UseRoomProps) => {
     enabled: !!roomId,
   });
 
-  const isJoined = room?.participants.includes(user?.id || "") ?? false;
+  const isJoined = useMemo(() => {
+    if (!user?.id || !room) return false;
+    return room.participants.includes(user.id);
+  }, [user?.id, room]);
 
   const handleJoinRoom = () => {
     if (!user) return;

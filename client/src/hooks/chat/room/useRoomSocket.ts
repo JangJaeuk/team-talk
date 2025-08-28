@@ -76,6 +76,7 @@ export const useRoomSocket = (
   const handleDisconnect = useCallback((reason: string) => {
     console.log("[Socket] 연결 끊김:", reason);
     joinedRoom.current = null;
+    setSocketId(null);
   }, []);
 
   const handleRoomJoinSuccess = useCallback((room: ChatRoomType) => {
