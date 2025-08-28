@@ -147,16 +147,18 @@ export const useAuthStore = create<AuthState>((set) => ({
       // 로그인 페이지로 이동 (미들웨어가 이제 허용함)
       onSuccess?.();
 
-      // 상태 초기화
-      set({
-        user: null,
-        accessToken: null,
-        isAuthenticated: false,
-        error: null,
-      });
+      setTimeout(() => {
+        // 상태 초기화
+        set({
+          user: null,
+          accessToken: null,
+          isAuthenticated: false,
+          error: null,
+        });
 
-      // 소켓 연결 해제
-      socketClient.disconnect();
+        // 소켓 연결 해제
+        socketClient.disconnect();
+      }, 200);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         set({ error: error.response.data.error });
