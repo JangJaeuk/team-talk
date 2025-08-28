@@ -28,7 +28,7 @@ interface AuthState {
   // 로그인
   login: (email: string, password: string) => Promise<void>;
   // 로그아웃
-  logout: () => void;
+  logout: (onSuccess?: () => void) => Promise<void>;
   // 에러 설정
   setError: (error: string | null) => void;
 }
@@ -133,15 +133,38 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  logout: () => {
-    httpClient.post("/auth/logout");
+  logout: async (onSuccess?: () => void) => {
+    try {
+      await httpClient.post("/auth/logout");
 
-    set({
-      user: null,
-      accessToken: null,
-      isAuthenticated: false,
-      error: null,
-    });
+      // 로그아웃 성공 시 쿠키에서 액세스 토큰 삭제
+      Cookies.remove("accessToken", {
+        path: "/",
+        secure: true,
+        sameSite: "none",
+      });
+
+      // 로그인 페이지로 이동 (미들웨어가 이제 허용함)
+      onSuccess?.();
+
+      // 상태 초기화
+      set({
+        user: null,
+        accessToken: null,
+        isAuthenticated: false,
+        error: null,
+      });
+
+      // 소켓 연결 해제
+      socketClient.disconnect();
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        set({ error: error.response.data.error });
+      } else {
+        set({ error: "로그아웃 중 오류가 발생했습니다." });
+      }
+      throw error;
+    }
   },
 
   setError: (error: string | null) => set({ error }),

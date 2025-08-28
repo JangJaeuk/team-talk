@@ -6,8 +6,7 @@ export const RoomListHeader = () => {
   const { user, logout } = useAuthStore();
 
   const handleLogout = () => {
-    logout();
-    router.push("/login");
+    logout(() => router.push("/login"));
   };
 
   return (
