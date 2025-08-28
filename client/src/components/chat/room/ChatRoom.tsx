@@ -42,6 +42,7 @@ export const ChatRoom = ({ roomId }: Props) => {
     setMessages,
     chatContainerRef,
     messageEndRef,
+    isLoading: isMessagesLoading,
   } = useMessages({
     roomId,
     isJoined: isJoined || false,
@@ -74,8 +75,8 @@ export const ChatRoom = ({ roomId }: Props) => {
     setNewMessage("");
   };
 
-  // 방 정보 로딩 중일 때 스켈레톤 UI 표시
-  if (!room) {
+  // 방 정보나 메시지 로딩 중일 때 스켈레톤 UI 표시
+  if (!room || isMessagesLoading) {
     return <ChatRoomSkeleton />;
   }
 
