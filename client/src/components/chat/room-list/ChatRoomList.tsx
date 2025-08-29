@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { ChatRoomListSkeleton } from "./ChatRoomListSkeleton";
 import { RoomListHeader } from "./layout/RoomListHeader";
+import { RoomListTabs } from "./layout/RoomListTabs";
 import { AvailableRoomList } from "./list/AvailableRoomList";
 import { JoinedRoomList } from "./list/JoinedRoomList";
 import { CreateRoomModal } from "./modal/CreateRoomModal";
@@ -17,6 +18,7 @@ import { RoomSearchBar } from "./tool/RoomSearchBar";
 export const ChatRoomList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<"joined" | "available">("joined");
   const router = useRouter();
 
   const onJoinRoom = useCallback(
@@ -84,17 +86,20 @@ export const ChatRoomList = () => {
         {isLoading ? (
           <ChatRoomListSkeleton />
         ) : (
-          <div className="space-y-4">
-            <JoinedRoomList
-              rooms={filteredJoinedRooms}
-              onJoinRoom={handleJoinRoom}
-              onLeaveRoom={handleLeaveRoom}
-              onEnterRoom={handleEnterRoom}
-            />
-            <AvailableRoomList
-              rooms={filteredAvailableRooms}
-              onJoinRoom={handleJoinRoom}
-            />
+          <div className="space-y-4 pb-20">
+            {activeTab === "joined" ? (
+              <JoinedRoomList
+                rooms={filteredJoinedRooms}
+                onJoinRoom={handleJoinRoom}
+                onLeaveRoom={handleLeaveRoom}
+                onEnterRoom={handleEnterRoom}
+              />
+            ) : (
+              <AvailableRoomList
+                rooms={filteredAvailableRooms}
+                onJoinRoom={handleJoinRoom}
+              />
+            )}
           </div>
         )}
 
@@ -103,6 +108,8 @@ export const ChatRoomList = () => {
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreateRoom}
         />
+
+        <RoomListTabs activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
     </div>
   );
