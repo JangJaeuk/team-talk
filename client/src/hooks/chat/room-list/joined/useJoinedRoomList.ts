@@ -4,7 +4,7 @@ import { Room } from "@/types/room";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 
-export const useRoomList = () => {
+export const useJoinedRoomList = () => {
   const { user } = useAuthStore();
 
   const {
@@ -12,7 +12,7 @@ export const useRoomList = () => {
     isLoading,
     refetch: fetchRooms,
   } = useQuery({
-    ...roomQueries.list(),
+    ...roomQueries.joinedList(),
     enabled: !!user,
   });
 
@@ -22,12 +22,8 @@ export const useRoomList = () => {
     );
   }, []);
 
-  const getJoinedRooms = useCallback(() => {
+  const getRooms = useCallback(() => {
     return rooms.filter((room) => room.participants.includes(user?.id || ""));
-  }, [rooms, user?.id]);
-
-  const getAvailableRooms = useCallback(() => {
-    return rooms.filter((room) => !room.participants.includes(user?.id || ""));
   }, [rooms, user?.id]);
 
   return {
@@ -35,7 +31,6 @@ export const useRoomList = () => {
     isLoading,
     fetchRooms,
     filterRoomsByQuery,
-    getJoinedRooms,
-    getAvailableRooms,
+    getRooms,
   };
 };

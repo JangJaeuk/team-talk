@@ -10,13 +10,13 @@ export const createRoomsRouter = (
   const router = Router();
 
   // 채팅방 목록 조회
-  router.get("/", authMiddleware, async (req, res) => {
+  router.get("/joined", authMiddleware, async (req, res) => {
     try {
-      const rooms = await roomService.getRooms(req.user!.uid);
+      const rooms = await roomService.getJoinedRooms(req.user!.uid);
       res.json(rooms);
     } catch (error) {
-      console.error("Error fetching rooms:", error);
-      res.status(500).json({ error: "Failed to fetch rooms" });
+      console.error("Error fetching joined rooms:", error);
+      res.status(500).json({ error: "Failed to fetch joined rooms" });
     }
   });
 
@@ -49,7 +49,7 @@ export const createRoomsRouter = (
       });
 
       // 모든 클라이언트에게 업데이트된 방 목록 전송
-      const rooms = await roomService.getRooms();
+      const rooms = await roomService.getJoinedRooms();
       io.emit("room:list", rooms);
 
       res.status(201).json({ id: roomId });

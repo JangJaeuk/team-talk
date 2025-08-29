@@ -10,7 +10,7 @@ interface UseRoomSocketProps {
   fetchRooms: () => Promise<void>;
 }
 
-export const useRoomListSocket = ({
+export const useJoinedRoomListSocket = ({
   onJoinRoom,
   fetchRooms,
 }: UseRoomSocketProps) => {
@@ -39,14 +39,14 @@ export const useRoomListSocket = ({
   const handleRoomList = useCallback(
     (updatedRooms: Room[]) => {
       console.log("Received updated room list:", updatedRooms);
-      queryClient.setQueryData(roomKeys.lists(), updatedRooms);
+      queryClient.setQueryData(roomKeys.joinedLists(), updatedRooms);
     },
     [queryClient]
   );
 
   const handleNewMessage = useCallback(
     (message: { roomId: string }) => {
-      queryClient.invalidateQueries({ queryKey: roomKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: roomKeys.joinedLists() });
     },
     [queryClient]
   );

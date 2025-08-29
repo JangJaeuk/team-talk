@@ -3,16 +3,17 @@ import { Room, RoomFormData } from "@/types/room";
 
 export const roomKeys = {
   all: ["rooms"] as const,
-  lists: () => [...roomKeys.all, "list"] as const,
-  list: (filters: string) => [...roomKeys.lists(), { filters }] as const,
+  joinedLists: () => [...roomKeys.all, "joinedList"] as const,
+  joinedList: (filters: string) =>
+    [...roomKeys.joinedLists(), { filters }] as const,
   detail: (roomId: string) => [...roomKeys.all, "detail", roomId] as const,
 };
 
 export const roomQueries = {
-  list: () => ({
-    queryKey: roomKeys.lists(),
+  joinedList: () => ({
+    queryKey: roomKeys.joinedLists(),
     queryFn: async () => {
-      const response = await httpClient.get<Room[]>("/rooms");
+      const response = await httpClient.get<Room[]>("/rooms/joined");
       return response.data;
     },
   }),

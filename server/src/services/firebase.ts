@@ -22,10 +22,15 @@ export const roomService = {
     return docRef.id;
   },
 
-  // 채팅방 목록 조회
-  async getRooms(userId?: string): Promise<ChatRoom[]> {
+  // 참여중인 채팅방 목록 조회
+  async getJoinedRooms(userId?: string): Promise<ChatRoom[]> {
+    if (!userId) {
+      return [];
+    }
+
     const snapshot = await db
       .collection("rooms")
+      .where("participants", "array-contains", userId)
       .orderBy("createdAt", "desc")
       .get();
 

@@ -55,7 +55,7 @@ export const setupSocketHandlers = (
       // 각 클라이언트에게 개별적으로 방 목록 전송
       const sockets = await io.fetchSockets();
       for (const s of sockets) {
-        const rooms = await roomService.getRooms(s.data.user.uid);
+        const rooms = await roomService.getJoinedRooms(s.data.user.uid);
         s.emit("room:list", rooms);
       }
     } catch (error) {
@@ -72,7 +72,7 @@ export const setupSocketHandlers = (
       // 각 클라이언트에게 개별적으로 방 목록 전송
       const sockets = await io.fetchSockets();
       for (const s of sockets) {
-        const rooms = await roomService.getRooms(s.data.user.uid);
+        const rooms = await roomService.getJoinedRooms(s.data.user.uid);
         s.emit("room:list", rooms);
       }
     } catch (error) {
@@ -129,7 +129,7 @@ export const setupSocketHandlers = (
       io.to(roomId).emit("room:participant:update", roomId, room.participants);
 
       // 업데이트된 방 목록 브로드캐스트
-      const rooms = await roomService.getRooms();
+      const rooms = await roomService.getJoinedRooms();
       io.emit("room:list", rooms);
     } catch (error) {
       console.error("Error handling room join:", error);
@@ -185,7 +185,7 @@ export const setupSocketHandlers = (
       io.to(roomId).emit("room:participant:update", roomId, room.participants);
 
       // 업데이트된 방 목록 브로드캐스트
-      const rooms = await roomService.getRooms();
+      const rooms = await roomService.getJoinedRooms();
       io.emit("room:list", rooms);
     } catch (error) {
       console.error("Error handling room leave:", error);
@@ -238,7 +238,7 @@ export const setupSocketHandlers = (
             await messageService.markMessageAsRead(messageId, s.data.user.uid);
           }
           // 각 클라이언트에게 개별적으로 방 목록 전송
-          const rooms = await roomService.getRooms(s.data.user.uid);
+          const rooms = await roomService.getJoinedRooms(s.data.user.uid);
           s.emit("room:list", rooms);
         }
       }

@@ -2,7 +2,6 @@ import { Room } from "@/types/room";
 
 interface Props {
   rooms: Room[];
-  onJoinRoom: (roomId: string) => void;
   onLeaveRoom: (roomId: string) => void;
   onEnterRoom: (roomId: string) => void;
 }
