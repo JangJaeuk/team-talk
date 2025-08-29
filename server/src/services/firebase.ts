@@ -25,80 +25,88 @@ export const roomService = {
   // 참여중인 채팅방 목록 조회
   async getJoinedRooms(userId?: string): Promise<ChatRoom[]> {
     if (!userId) {
-      return [];
+      throw new Error("유저 ID가 필요합니다.");
     }
 
-    const snapshot = await db
-      .collection("rooms")
-      .where("participants", "array-contains", userId)
-      .orderBy("createdAt", "desc")
-      .get();
+    try {
+      const snapshot = await db
+        .collection("rooms")
+        .where("participants", "array-contains", userId)
+        .orderBy("createdAt", "desc")
+        .get();
 
-    const rooms = snapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        createdAt: convertToDate(data.createdAt),
-      } as ChatRoom;
-    });
+      const rooms = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: convertToDate(data.createdAt),
+        } as ChatRoom;
+      });
 
-    // 각 방의 최신 메시지와 읽지 않은 메시지 수 가져오기
-    const roomsWithDetails = await Promise.all(
-      rooms.map(async (room) => {
-        // 최신 메시지 가져오기
-        const messageSnapshot = await db
-          .collection("messages")
-          .where("roomId", "==", room.id)
-          .orderBy("createdAt", "desc")
-          .limit(1)
-          .get();
-
-        const lastMessage = messageSnapshot.docs[0]
-          ? (() => {
-              const data = messageSnapshot.docs[0].data();
-              return {
-                id: messageSnapshot.docs[0].id,
-                ...data,
-                createdAt: convertToDate(data.createdAt),
-              } as Message;
-            })()
-          : null;
-
-        // 읽지 않은 메시지 수 계산
-        let unreadCount = 0;
-        if (userId) {
-          const messagesSnapshot = await db
+      // 각 방의 최신 메시지와 읽지 않은 메시지 수 가져오기
+      const roomsWithDetails = await Promise.all(
+        rooms.map(async (room) => {
+          // 최신 메시지 가져오기
+          const messageSnapshot = await db
             .collection("messages")
             .where("roomId", "==", room.id)
             .orderBy("createdAt", "desc")
+            .limit(1)
             .get();
 
-          // 사용자가 읽지 않은 메시지 수 계산
-          unreadCount = messagesSnapshot.docs.filter((doc) => {
-            const message = doc.data();
-            return !message.readBy?.some(
-              (read: { userId: string }) => read.userId === userId
-            );
-          }).length;
-        }
+          const lastMessage = messageSnapshot.docs[0]
+            ? (() => {
+                const data = messageSnapshot.docs[0].data();
+                return {
+                  id: messageSnapshot.docs[0].id,
+                  ...data,
+                  createdAt: convertToDate(data.createdAt),
+                } as Message;
+              })()
+            : null;
 
-        return {
-          ...room,
-          lastMessage,
-          unreadCount,
-        };
-      })
-    );
+          // 읽지 않은 메시지 수 계산
+          let unreadCount = 0;
+          if (userId) {
+            const messagesSnapshot = await db
+              .collection("messages")
+              .where("roomId", "==", room.id)
+              .orderBy("createdAt", "desc")
+              .get();
 
-    // 최신 메시지 시간 순으로 정렬
-    roomsWithDetails.sort((a, b) => {
-      const aTime = (a.lastMessage?.createdAt as any)?._seconds || 0;
-      const bTime = (b.lastMessage?.createdAt as any)?._seconds || 0;
-      return bTime - aTime;
-    });
+            // 사용자가 읽지 않은 메시지 수 계산
+            unreadCount = messagesSnapshot.docs.filter((doc) => {
+              const message = doc.data();
+              return !message.readBy?.some(
+                (read: { userId: string }) => read.userId === userId
+              );
+            }).length;
+          }
 
-    return roomsWithDetails;
+          return {
+            ...room,
+            lastMessage,
+            unreadCount,
+          };
+        })
+      );
+
+      // 최신 메시지 시간 순으로 정렬
+      roomsWithDetails.sort((a, b) => {
+        const aTime = (a.lastMessage?.createdAt as any)?._seconds || 0;
+        const bTime = (b.lastMessage?.createdAt as any)?._seconds || 0;
+        return bTime - aTime;
+      });
+
+      return roomsWithDetails;
+    } catch (error) {
+      throw new Error(
+        `참여 중인 채팅방 목록 조회 실패: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
   },
 
   // 참여 가능한 채팅방 목록 조회
