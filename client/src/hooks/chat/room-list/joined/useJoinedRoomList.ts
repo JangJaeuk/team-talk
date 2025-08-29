@@ -8,7 +8,7 @@ export const useJoinedRoomList = () => {
   const { user } = useAuthStore();
 
   const {
-    data: rooms = [],
+    data: rooms,
     isLoading,
     refetch: fetchRooms,
   } = useQuery({
@@ -23,6 +23,7 @@ export const useJoinedRoomList = () => {
   }, []);
 
   const getRooms = useCallback(() => {
+    if (!rooms) return null;
     return rooms.filter((room) => room.participants.includes(user?.id || ""));
   }, [rooms, user?.id]);
 

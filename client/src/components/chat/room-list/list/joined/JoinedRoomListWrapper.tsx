@@ -58,31 +58,32 @@ export const JoinedRoomListWrapper = () => {
     }
   };
 
-  const filteredJoinedRooms = filterRoomsByQuery(getRooms(), searchQuery);
+  const joinedRooms = getRooms();
+  const filteredJoinedRooms = joinedRooms
+    ? filterRoomsByQuery(joinedRooms, searchQuery)
+    : [];
 
   return (
     <div className="h-full flex flex-col">
       <RoomSearchBar
         searchQuery={searchQuery}
+        searchPlaceholder="채팅방 검색..."
+        buttonText="방 만들기"
         onSearch={handleSearch}
-        onCreateRoom={() => setShowCreateModal(true)}
+        onClickButton={() => setShowCreateModal(true)}
       />
 
-      <div className="flex-1 overflow-y-auto">
-        {isLoading ? (
+      <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar">
+        {isLoading || !joinedRooms ? (
           <ChatRoomListSkeleton />
         ) : filteredJoinedRooms.length > 0 ? (
-          <div className="space-y-4">
-            <JoinedRoomList
-              rooms={filteredJoinedRooms}
-              onLeaveRoom={handleLeaveRoom}
-              onEnterRoom={handleEnterRoom}
-            />
-          </div>
+          <JoinedRoomList
+            rooms={filteredJoinedRooms}
+            onLeaveRoom={handleLeaveRoom}
+            onEnterRoom={handleEnterRoom}
+          />
         ) : (
-          <div className="h-full">
-            <JoinedRoomListEmpty />
-          </div>
+          <JoinedRoomListEmpty />
         )}
       </div>
 

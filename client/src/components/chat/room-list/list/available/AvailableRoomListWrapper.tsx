@@ -4,10 +4,10 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
+import { ChatRoomListSkeleton } from "../../ChatRoomListSkeleton";
 import { RoomSearchBar } from "../../tool/RoomSearchBar";
 import { AvailableRoomList } from "./AvailableRoomList";
 import { AvailableRoomListEmpty } from "./AvailableRoomListEmpty";
-import { AvailableRoomListSkeleton } from "./AvailableRoomListSkeleton";
 
 const ROOMS_PER_PAGE = 30;
 
@@ -48,28 +48,26 @@ export const AvailableRoomListWrapper = () => {
     <div className="h-full flex flex-col">
       <RoomSearchBar
         searchQuery={searchQuery}
+        searchPlaceholder="채팅방 검색..."
+        showButton={false}
         onSearch={setSearchQuery}
-        onCreateRoom={() => {}}
       />
-      <div className="flex-1 overflow-y-auto space-y-4">
-        {isLoading ? (
-          <AvailableRoomListSkeleton />
-        ) : (
+
+      <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar">
+        {isLoading || !data ? (
+          <ChatRoomListSkeleton />
+        ) : allRooms.length > 0 ? (
           <>
-            {allRooms.length > 0 ? (
-              <>
-                <AvailableRoomList rooms={allRooms} />
-                <div ref={ref} className="h-4" />
-                {isFetchingNextPage && (
-                  <div className="flex justify-center py-4">
-                    <div className="h-8 w-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
-                  </div>
-                )}
-              </>
-            ) : (
-              <AvailableRoomListEmpty />
+            <AvailableRoomList rooms={allRooms} />
+            <div ref={ref} className="h-4" />
+            {isFetchingNextPage && (
+              <div className="flex justify-center py-4">
+                <div className="h-8 w-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+              </div>
             )}
           </>
+        ) : (
+          <AvailableRoomListEmpty />
         )}
       </div>
     </div>
