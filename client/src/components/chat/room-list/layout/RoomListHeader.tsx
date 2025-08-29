@@ -18,7 +18,7 @@ export const RoomListHeader = () => {
   };
 
   return (
-    <div className="flex justify-between items-center mb-6">
+    <div className="flex justify-between items-center mb-6 p-4">
       <h1 className="text-2xl font-bold">채팅방 목록</h1>
       <div className="flex items-center">
         <span className="mr-4">{user?.nickname}님 환영합니다!</span>

@@ -11,6 +11,7 @@ import { ChatRoomListSkeleton } from "../../ChatRoomListSkeleton";
 import { CreateRoomModal } from "../../modal/CreateRoomModal";
 import { RoomSearchBar } from "../../tool/RoomSearchBar";
 import { JoinedRoomList } from "./JoinedRoomList";
+import { JoinedRoomListEmpty } from "./JoinedRoomListEmpty";
 
 export const JoinedRoomListWrapper = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -60,24 +61,30 @@ export const JoinedRoomListWrapper = () => {
   const filteredJoinedRooms = filterRoomsByQuery(getRooms(), searchQuery);
 
   return (
-    <div>
+    <div className="h-full flex flex-col">
       <RoomSearchBar
         searchQuery={searchQuery}
         onSearch={handleSearch}
         onCreateRoom={() => setShowCreateModal(true)}
       />
 
-      {isLoading ? (
-        <ChatRoomListSkeleton />
-      ) : (
-        <div className="space-y-4 pb-20">
-          <JoinedRoomList
-            rooms={filteredJoinedRooms}
-            onLeaveRoom={handleLeaveRoom}
-            onEnterRoom={handleEnterRoom}
-          />
-        </div>
-      )}
+      <div className="flex-1 overflow-y-auto mt-4">
+        {isLoading ? (
+          <ChatRoomListSkeleton />
+        ) : filteredJoinedRooms.length > 0 ? (
+          <div className="space-y-4">
+            <JoinedRoomList
+              rooms={filteredJoinedRooms}
+              onLeaveRoom={handleLeaveRoom}
+              onEnterRoom={handleEnterRoom}
+            />
+          </div>
+        ) : (
+          <div className="h-full">
+            <JoinedRoomListEmpty />
+          </div>
+        )}
+      </div>
 
       <CreateRoomModal
         isOpen={showCreateModal}

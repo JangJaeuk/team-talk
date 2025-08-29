@@ -13,10 +13,18 @@ export const roomKeys = {
 };
 
 export const roomQueries = {
-  availableList: () => ({
-    queryKey: roomKeys.availableLists(),
-    queryFn: async () => {
-      const response = await httpClient.get<Room[]>("/rooms/available");
+  availableList: (params?: { search?: string; limit?: number }) => ({
+    queryKey: [...roomKeys.availableLists(), params],
+    queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
+      const searchParams = new URLSearchParams();
+      if (params?.search) searchParams.set("search", params.search);
+      if (pageParam) searchParams.set("lastRoomId", pageParam);
+      if (params?.limit) searchParams.set("limit", params.limit.toString());
+
+      const response = await httpClient.get<{
+        rooms: Room[];
+        hasNextPage: boolean;
+      }>(`/rooms/available?${searchParams.toString()}`);
       return response.data;
     },
   }),

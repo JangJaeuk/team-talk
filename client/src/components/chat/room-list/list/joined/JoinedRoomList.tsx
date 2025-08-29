@@ -8,9 +8,8 @@ interface Props {
 
 export const JoinedRoomList = ({ rooms, onEnterRoom, onLeaveRoom }: Props) => {
   return (
-    <div>
-      <h2 className="text-lg font-bold mb-2">가입한 채팅방</h2>
-      <div className="space-y-2">
+    <div className="space-y-4">
+      <div className="space-y-2 px-4">
         {rooms.map((room) => (
           <div key={room.id} className="p-4 border rounded-lg hover:bg-gray-50">
             <div className="flex justify-between items-start mb-2">

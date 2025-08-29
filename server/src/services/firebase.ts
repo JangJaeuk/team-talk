@@ -102,22 +102,41 @@ export const roomService = {
   },
 
   // 참여 가능한 채팅방 목록 조회
-  async getAvailableRooms(userId: string): Promise<ChatRoom[]> {
-    const snapshot = await db
+  async getAvailableRooms(
+    userId: string,
+    searchQuery?: string,
+    lastRoomId?: string,
+    limit: number = 20
+  ): Promise<{ rooms: ChatRoom[]; hasNextPage: boolean }> {
+    // 사용자가 참여 중인 방 ID 목록 조회
+    const joinedSnapshot = await db
       .collection("rooms")
       .where("participants", "array-contains", userId)
       .get();
+    const joinedRoomIds = joinedSnapshot.docs.map((doc) => doc.id);
 
-    // 사용자가 참여 중인 방 ID 목록
-    const joinedRoomIds = snapshot.docs.map((doc) => doc.id);
+    // 기본 쿼리 설정
+    let query: FirebaseFirestore.Query = searchQuery
+      ? db
+          .collection("rooms")
+          .orderBy("name")
+          .startAt(searchQuery.toLowerCase())
+          .endAt(searchQuery.toLowerCase() + "\uf8ff")
+      : db.collection("rooms").orderBy("createdAt", "desc");
 
-    // 사용자가 참여하지 않은 방만 조회
-    const availableSnapshot = await db
-      .collection("rooms")
-      .orderBy("createdAt", "desc")
-      .get();
+    // 이전 마지막 문서 이후부터 조회
+    if (lastRoomId) {
+      const lastDoc = await db.collection("rooms").doc(lastRoomId).get();
+      if (lastDoc.exists) {
+        query = query.startAfter(lastDoc);
+      }
+    }
+
+    // limit + 1개를 조회하여 다음 페이지 존재 여부 확인
+    const availableSnapshot = await query.limit(limit + 1).get();
 
     const rooms = availableSnapshot.docs
+      .slice(0, limit) // 실제로는 limit 개수만큼만 사용
       .filter((doc) => !joinedRoomIds.includes(doc.id))
       .map((doc) => {
         const data = doc.data();
@@ -127,6 +146,8 @@ export const roomService = {
           createdAt: convertToDate(data.createdAt),
         } as ChatRoom;
       });
+
+    const hasNextPage = availableSnapshot.docs.length > limit;
 
     // 각 방의 최신 메시지와 참여자 수 정보 추가
     const roomsWithDetails = await Promise.all(
@@ -165,7 +186,10 @@ export const roomService = {
       return bTime - aTime;
     });
 
-    return roomsWithDetails;
+    return {
+      rooms: roomsWithDetails,
+      hasNextPage,
+    };
   },
 
   // 단일 채팅방 조회

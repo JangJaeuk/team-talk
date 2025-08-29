@@ -49,22 +49,26 @@ export const ChatRoomList = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto p-4">
+    <div className="h-screen bg-gray-50 flex flex-col">
+      <div className="w-full flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
         <RoomListHeader />
 
-        {activeTab === "joined" ? (
-          <JoinedRoomListWrapper />
-        ) : (
-          <AvailableRoomListWrapper />
-        )}
+        <div className="flex-1 overflow-hidden">
+          {activeTab === "joined" ? (
+            <JoinedRoomListWrapper />
+          ) : (
+            <AvailableRoomListWrapper />
+          )}
+        </div>
 
         <CreateRoomModal
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreateRoom}
         />
+      </div>
 
+      <div className="h-16 fixed bottom-0 left-0 right-0 bg-white">
         <RoomListTabs activeTab={activeTab} onTabChange={handleTabChange} />
       </div>
     </div>

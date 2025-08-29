@@ -10,7 +10,7 @@ export const RoomSearchBar = ({
   onCreateRoom,
 }: Props) => {
   return (
-    <div className="flex justify-between mb-4">
+    <div className="flex justify-between mb-4 px-4">
       <input
         type="text"
         value={searchQuery}

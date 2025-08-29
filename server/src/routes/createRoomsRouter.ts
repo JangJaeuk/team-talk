@@ -12,8 +12,14 @@ export const createRoomsRouter = (
   // 참여 가능한 채팅방 목록 조회
   router.get("/available", authMiddleware, async (req, res) => {
     try {
-      const rooms = await roomService.getAvailableRooms(req.user!.uid);
-      res.json(rooms);
+      const { search, lastRoomId, limit } = req.query;
+      const result = await roomService.getAvailableRooms(
+        req.user!.uid,
+        search as string | undefined,
+        lastRoomId as string | undefined,
+        limit ? parseInt(limit as string) : undefined
+      );
+      res.json(result);
     } catch (error) {
       console.error("Error fetching available rooms:", error);
       res.status(500).json({ error: "Failed to fetch available rooms" });
