@@ -46,8 +46,7 @@ class SocketClient extends EventEmitter {
       const data = await response.json();
       Cookies.set("accessToken", data.accessToken, {
         path: "/",
-        secure: true,
-        sameSite: "none",
+        expires: 14, // 14일
       });
       return data.accessToken;
     } catch (error) {

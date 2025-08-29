@@ -121,16 +121,13 @@ class HttpClient {
   private setAccessToken(token: string): void {
     Cookies.set("accessToken", token, {
       path: "/",
-      secure: true,
-      sameSite: "none",
+      expires: 14, // 14일
     });
   }
 
   private handleUnauthorized(): void {
     Cookies.remove("accessToken", {
       path: "/",
-      secure: true,
-      sameSite: "none",
     });
     window.location.href = "/login";
   }

@@ -112,8 +112,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       // Access Token 쿠키에 저장
       Cookies.set("accessToken", accessToken, {
         path: "/",
-        secure: true,
-        sameSite: "none",
+        expires: 14, // 14일
       });
 
       // 상태 업데이트
@@ -140,8 +139,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       // 로그아웃 성공 시 쿠키에서 액세스 토큰 삭제
       Cookies.remove("accessToken", {
         path: "/",
-        secure: true,
-        sameSite: "none",
       });
 
       // 로그인 페이지로 이동 (미들웨어가 이제 허용함)

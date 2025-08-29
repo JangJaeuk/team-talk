@@ -19,9 +19,8 @@ router.post("/register", async (req, res) => {
     // Refresh Token을 HttpOnly 쿠키로 설정
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
       maxAge: REFRESH_TOKEN_EXPIRES_NUMBER * 24 * 60 * 60 * 1000, // 14일
+      path: "/",
     });
 
     res.json({ user, accessToken, refreshToken });
@@ -42,9 +41,8 @@ router.post("/login", async (req, res) => {
     // Refresh Token을 HttpOnly 쿠키로 설정
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
       maxAge: REFRESH_TOKEN_EXPIRES_NUMBER * 24 * 60 * 60 * 1000, // 14일
+      path: "/",
     });
 
     res.json({ user, accessToken, refreshToken });
