@@ -5,7 +5,7 @@ import { useRoomListSocket } from "@/hooks/chat/room-list/useRoomListSocket";
 import { roomKeys, roomMutations } from "@/queries/room";
 import { RoomFormData } from "@/types/room";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";
 import { ChatRoomListSkeleton } from "./ChatRoomListSkeleton";
 import { RoomListHeader } from "./layout/RoomListHeader";
@@ -18,8 +18,23 @@ import { RoomSearchBar } from "./tool/RoomSearchBar";
 export const ChatRoomList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<"joined" | "available">("joined");
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<"joined" | "available">(() => {
+    const tabType = searchParams.get("tabType");
+    return tabType === "available" ? "available" : "joined";
+  });
   const router = useRouter();
+
+  const handleTabChange = (tab: "joined" | "available") => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams);
+    if (tab === "joined") {
+      params.delete("tabType");
+    } else {
+      params.set("tabType", tab);
+    }
+    router.replace(`/rooms?${params.toString()}`);
+  };
 
   const onJoinRoom = useCallback(
     (roomId: string) => {
@@ -109,7 +124,7 @@ export const ChatRoomList = () => {
           onSubmit={handleCreateRoom}
         />
 
-        <RoomListTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        <RoomListTabs activeTab={activeTab} onTabChange={handleTabChange} />
       </div>
     </div>
   );
