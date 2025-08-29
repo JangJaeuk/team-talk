@@ -9,7 +9,7 @@ import { AvailableRoomList } from "./AvailableRoomList";
 import { AvailableRoomListEmpty } from "./AvailableRoomListEmpty";
 import { AvailableRoomListSkeleton } from "./AvailableRoomListSkeleton";
 
-const ROOMS_PER_PAGE = 7;
+const ROOMS_PER_PAGE = 30;
 
 export const AvailableRoomListWrapper = () => {
   const { user } = useAuthStore();
@@ -51,7 +51,7 @@ export const AvailableRoomListWrapper = () => {
         onSearch={setSearchQuery}
         onCreateRoom={() => {}}
       />
-      <div className="flex-1 overflow-y-auto space-y-4 mt-4">
+      <div className="flex-1 overflow-y-auto space-y-4">
         {isLoading ? (
           <AvailableRoomListSkeleton />
         ) : (

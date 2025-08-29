@@ -68,7 +68,7 @@ export const JoinedRoomListWrapper = () => {
         onCreateRoom={() => setShowCreateModal(true)}
       />
 
-      <div className="flex-1 overflow-y-auto mt-4">
+      <div className="flex-1 overflow-y-auto">
         {isLoading ? (
           <ChatRoomListSkeleton />
         ) : filteredJoinedRooms.length > 0 ? (

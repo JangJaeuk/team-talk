@@ -34,7 +34,7 @@ export const AvailableRoomList = ({ rooms }: Props) => {
   });
 
   return (
-    <div className="space-y-4 px-4">
+    <div className="space-y-4 p-4">
       {rooms.map((room) => (
         <div
           key={room.id}
