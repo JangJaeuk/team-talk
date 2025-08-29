@@ -6,10 +6,20 @@ export const roomKeys = {
   joinedLists: () => [...roomKeys.all, "joinedList"] as const,
   joinedList: (filters: string) =>
     [...roomKeys.joinedLists(), { filters }] as const,
+  availableLists: () => [...roomKeys.all, "availableList"] as const,
+  availableList: (filters: string) =>
+    [...roomKeys.availableLists(), { filters }] as const,
   detail: (roomId: string) => [...roomKeys.all, "detail", roomId] as const,
 };
 
 export const roomQueries = {
+  availableList: () => ({
+    queryKey: roomKeys.availableLists(),
+    queryFn: async () => {
+      const response = await httpClient.get<Room[]>("/rooms/available");
+      return response.data;
+    },
+  }),
   joinedList: () => ({
     queryKey: roomKeys.joinedLists(),
     queryFn: async () => {
@@ -30,6 +40,12 @@ export const roomMutations = {
   create: () => ({
     mutationFn: async (data: RoomFormData) => {
       const response = await httpClient.post<Room>("/rooms", data);
+      return response.data;
+    },
+  }),
+  join: () => ({
+    mutationFn: async (roomId: string) => {
+      const response = await httpClient.post<Room>(`/rooms/${roomId}/join`);
       return response.data;
     },
   }),

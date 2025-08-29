@@ -9,6 +9,17 @@ export const createRoomsRouter = (
 ) => {
   const router = Router();
 
+  // 참여 가능한 채팅방 목록 조회
+  router.get("/available", authMiddleware, async (req, res) => {
+    try {
+      const rooms = await roomService.getAvailableRooms(req.user!.uid);
+      res.json(rooms);
+    } catch (error) {
+      console.error("Error fetching available rooms:", error);
+      res.status(500).json({ error: "Failed to fetch available rooms" });
+    }
+  });
+
   // 채팅방 목록 조회
   router.get("/joined", authMiddleware, async (req, res) => {
     try {
@@ -56,6 +67,23 @@ export const createRoomsRouter = (
     } catch (error) {
       console.error("Error creating room:", error);
       res.status(500).json({ error: "Failed to create room" });
+    }
+  });
+
+  // 채팅방 참여
+  router.post("/:roomId/join", authMiddleware, async (req, res) => {
+    try {
+      const { roomId } = req.params;
+      const room = await roomService.joinRoom(roomId, req.user!.uid);
+
+      // 모든 클라이언트에게 업데이트된 방 목록 전송
+      const rooms = await roomService.getJoinedRooms();
+      io.emit("room:list", rooms);
+
+      res.json(room);
+    } catch (error) {
+      console.error("Error joining room:", error);
+      res.status(500).json({ error: "Failed to join room" });
     }
   });
 

@@ -101,6 +101,73 @@ export const roomService = {
     return roomsWithDetails;
   },
 
+  // 참여 가능한 채팅방 목록 조회
+  async getAvailableRooms(userId: string): Promise<ChatRoom[]> {
+    const snapshot = await db
+      .collection("rooms")
+      .where("participants", "array-contains", userId)
+      .get();
+
+    // 사용자가 참여 중인 방 ID 목록
+    const joinedRoomIds = snapshot.docs.map((doc) => doc.id);
+
+    // 사용자가 참여하지 않은 방만 조회
+    const availableSnapshot = await db
+      .collection("rooms")
+      .orderBy("createdAt", "desc")
+      .get();
+
+    const rooms = availableSnapshot.docs
+      .filter((doc) => !joinedRoomIds.includes(doc.id))
+      .map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: convertToDate(data.createdAt),
+        } as ChatRoom;
+      });
+
+    // 각 방의 최신 메시지와 참여자 수 정보 추가
+    const roomsWithDetails = await Promise.all(
+      rooms.map(async (room) => {
+        // 최신 메시지 가져오기
+        const messageSnapshot = await db
+          .collection("messages")
+          .where("roomId", "==", room.id)
+          .orderBy("createdAt", "desc")
+          .limit(1)
+          .get();
+
+        const lastMessage = messageSnapshot.docs[0]
+          ? (() => {
+              const data = messageSnapshot.docs[0].data();
+              return {
+                id: messageSnapshot.docs[0].id,
+                ...data,
+                createdAt: convertToDate(data.createdAt),
+              } as Message;
+            })()
+          : null;
+
+        return {
+          ...room,
+          lastMessage,
+          participantCount: room.participants.length,
+        };
+      })
+    );
+
+    // 최신 메시지 시간 순으로 정렬
+    roomsWithDetails.sort((a, b) => {
+      const aTime = (a.lastMessage?.createdAt as any)?._seconds || 0;
+      const bTime = (b.lastMessage?.createdAt as any)?._seconds || 0;
+      return bTime - aTime;
+    });
+
+    return roomsWithDetails;
+  },
+
   // 단일 채팅방 조회
   async getRoom(roomId: string): Promise<ChatRoom | null> {
     const doc = await db.collection("rooms").doc(roomId).get();
