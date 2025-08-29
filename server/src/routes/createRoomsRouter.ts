@@ -33,7 +33,7 @@ export const createRoomsRouter = (
       res.json(rooms);
     } catch (error) {
       console.error("Error fetching joined rooms:", error);
-      res.status(500).json({ error: "Failed to fetch joined rooms" });
+      res.status(500).json({ error });
     }
   });
 
