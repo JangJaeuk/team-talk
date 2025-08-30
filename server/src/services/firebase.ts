@@ -14,7 +14,12 @@ const convertToDate = (timestamp: {
 // 채팅방 관련 서비스
 export const roomService = {
   // 채팅방 생성
-  async createRoom(room: Omit<ChatRoom, "id" | "createdAt">): Promise<string> {
+  async createRoom(room: {
+    name: string;
+    description?: string;
+    createdBy: string;
+    participants: string[];
+  }): Promise<string> {
     const docRef = await db.collection("rooms").add({
       ...room,
       createdAt: new Date(),
@@ -35,14 +40,31 @@ export const roomService = {
         .orderBy("createdAt", "desc")
         .get();
 
-      const rooms = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: convertToDate(data.createdAt),
-        } as ChatRoom;
-      });
+      const rooms = await Promise.all(
+        snapshot.docs.map(async (doc) => {
+          const data = doc.data();
+
+          // 참여자 정보 가져오기
+          const participants = await Promise.all(
+            data.participants.map(async (userId: string) => {
+              const userDoc = await db.collection("users").doc(userId).get();
+              const userData = userDoc.data();
+              return {
+                id: userId,
+                avatar: userData?.avatar || "avatar1",
+                nickname: userData?.nickname || "알 수 없음",
+              };
+            })
+          );
+
+          return {
+            id: doc.id,
+            ...data,
+            participants,
+            createdAt: convertToDate(data.createdAt),
+          } as ChatRoom;
+        })
+      );
 
       // 각 방의 최신 메시지와 읽지 않은 메시지 수 가져오기
       const roomsWithDetails = await Promise.all(
@@ -150,17 +172,34 @@ export const roomService = {
     // limit + 1개를 조회하여 다음 페이지 존재 여부 확인
     const availableSnapshot = await query.limit(limit + 1).get();
 
-    const rooms = availableSnapshot.docs
-      .slice(0, limit) // 실제로는 limit 개수만큼만 사용
-      .filter((doc) => !joinedRoomIds.includes(doc.id))
-      .map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: convertToDate(data.createdAt),
-        } as ChatRoom;
-      });
+    const rooms = await Promise.all(
+      availableSnapshot.docs
+        .slice(0, limit) // 실제로는 limit 개수만큼만 사용
+        .filter((doc) => !joinedRoomIds.includes(doc.id))
+        .map(async (doc) => {
+          const data = doc.data();
+
+          // 참여자 정보 가져오기
+          const participants = await Promise.all(
+            data.participants.map(async (userId: string) => {
+              const userDoc = await db.collection("users").doc(userId).get();
+              const userData = userDoc.data();
+              return {
+                id: userId,
+                avatar: userData?.avatar || "avatar1",
+                nickname: userData?.nickname || "알 수 없음",
+              };
+            })
+          );
+
+          return {
+            id: doc.id,
+            ...data,
+            participants,
+            createdAt: convertToDate(data.createdAt),
+          } as ChatRoom;
+        })
+    );
 
     const hasNextPage = availableSnapshot.docs.length > limit;
 
@@ -219,12 +258,26 @@ export const roomService = {
       return null;
     }
 
-    const data = doc.data() as unknown as ChatRoom;
+    const data = doc.data();
+    if (!data) return null;
+
+    // 참여자 정보 가져오기
+    const participants = await Promise.all(
+      (data.participants || []).map(async (userId: string) => {
+        const userDoc = await db.collection("users").doc(userId).get();
+        const userData = userDoc.data();
+        return {
+          id: userId,
+          avatar: userData?.avatar || "avatar1",
+          nickname: userData?.nickname || "알 수 없음",
+        };
+      })
+    );
 
     return {
       ...data,
       id: doc.id,
-      participants: data.participants || [], // 방의 실제 참여자 목록 사용
+      participants,
     } as ChatRoom;
   },
 

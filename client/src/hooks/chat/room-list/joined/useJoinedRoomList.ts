@@ -22,16 +22,10 @@ export const useJoinedRoomList = () => {
     );
   }, []);
 
-  const getRooms = useCallback(() => {
-    if (!rooms) return null;
-    return rooms.filter((room) => room.participants.includes(user?.id || ""));
-  }, [rooms, user?.id]);
-
   return {
     rooms,
     isLoading,
     fetchRooms,
     filterRoomsByQuery,
-    getRooms,
   };
 };

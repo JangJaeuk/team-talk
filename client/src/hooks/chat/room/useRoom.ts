@@ -22,7 +22,7 @@ export const useRoom = ({ roomId }: UseRoomProps) => {
 
   const isJoined = useMemo(() => {
     if (!user?.id || !room) return false;
-    return room.participants.includes(user.id);
+    return room.participants.some((participant) => participant.id === user.id);
   }, [user?.id, room]);
 
   const handleJoinRoom = () => {

@@ -5,6 +5,7 @@ declare global {
         uid: string;
         email?: string;
         nickname?: string;
+        avatar?: string;
       };
     }
   }

@@ -10,12 +10,12 @@ interface Props {
   setActiveMenuMessageId: (id: string | null) => void;
   MessageSettingsMenu: FC<{
     message: Message;
-    participants: string[];
+    participants: { id: string; avatar: string; nickname: string }[];
     messages: Message[];
     activeMenuMessageId: string | null;
     setActiveMenuMessageId: (id: string | null) => void;
   }>;
-  participants: string[];
+  participants: { id: string; avatar: string; nickname: string }[];
   messages: Message[];
   prevMessage?: Message; // 이전 메시지 정보 추가
 }

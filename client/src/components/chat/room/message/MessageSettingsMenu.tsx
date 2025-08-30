@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 interface Props {
   message: Message;
-  participants: string[];
+  participants: { id: string; avatar: string; nickname: string }[];
   messages: Message[];
   activeMenuMessageId: string | null;
   setActiveMenuMessageId: (id: string | null) => void;
@@ -93,7 +93,13 @@ export const MessageSettingsMenu = ({
               className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
             >
               {message.readBy.filter((read) => read.userId !== user?.id).length}
-              /{participants.filter((id) => id !== user?.id).length} 읽음
+              /
+              {
+                participants.filter(
+                  (participant) => participant.id !== user?.id
+                ).length
+              }{" "}
+              읽음
             </button>
             {showReadBy && (
               <>
@@ -131,29 +137,25 @@ export const MessageSettingsMenu = ({
                   </div>
                   <div className="space-y-1.5">
                     {participants
-                      .filter((participantId) => participantId !== user?.id)
+                      .filter((participant) => participant.id !== user?.id)
                       .sort((a, b) => {
                         const aRead = message.readBy.some(
-                          (read) => read.userId === a
+                          (read) => read.userId === a.id
                         );
                         const bRead = message.readBy.some(
-                          (read) => read.userId === b
+                          (read) => read.userId === b.id
                         );
                         if (aRead && !bRead) return -1;
                         if (!aRead && bRead) return 1;
                         return 0;
                       })
-                      .map((participantId) => {
-                        const participant = messages.find(
-                          (msg) => msg.sender.id === participantId
-                        )?.sender;
-                        if (!participant) return null;
+                      .map((participant) => {
                         const hasRead = message.readBy.some(
-                          (read) => read.userId === participantId
+                          (read) => read.userId === participant.id
                         );
                         return (
                           <div
-                            key={participantId}
+                            key={participant.id}
                             className={`flex items-center justify-between p-1.5 rounded text-sm ${
                               hasRead ? "bg-blue-50" : "bg-gray-50"
                             }`}
@@ -215,29 +217,25 @@ export const MessageSettingsMenu = ({
                     <div className="flex-1 overflow-y-auto p-4">
                       <div className="space-y-2">
                         {participants
-                          .filter((participantId) => participantId !== user?.id)
+                          .filter((participant) => participant.id !== user?.id)
                           .sort((a, b) => {
                             const aRead = message.readBy.some(
-                              (read) => read.userId === a
+                              (read) => read.userId === a.id
                             );
                             const bRead = message.readBy.some(
-                              (read) => read.userId === b
+                              (read) => read.userId === b.id
                             );
                             if (aRead && !bRead) return -1;
                             if (!aRead && bRead) return 1;
                             return 0;
                           })
-                          .map((participantId) => {
-                            const participant = messages.find(
-                              (msg) => msg.sender.id === participantId
-                            )?.sender;
-                            if (!participant) return null;
+                          .map((participant) => {
                             const hasRead = message.readBy.some(
-                              (read) => read.userId === participantId
+                              (read) => read.userId === participant.id
                             );
                             return (
                               <div
-                                key={participantId}
+                                key={participant.id}
                                 className={`flex items-center justify-between p-3 rounded-lg text-sm ${
                                   hasRead ? "bg-blue-50" : "bg-gray-50"
                                 }`}

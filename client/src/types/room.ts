@@ -4,7 +4,7 @@ export interface Room {
   id: string;
   name: string;
   description?: string;
-  participants: string[];
+  participants: { id: string; avatar: string; nickname: string }[];
   lastMessage?: Message | null;
   unreadCount: number;
   createdBy: string;

@@ -14,7 +14,7 @@ export interface ChatRoom {
   createdAt: Date;
   participantCount: number;
   lastMessage?: Message | null;
-  participants: string[]; // User[] -> string[]로 변경
+  participants: { id: string; avatar: string; nickname: string }[]; // 참여자 정보 목록
   unreadCount: number; // 읽지 않은 메시지 수
 }
 
@@ -48,7 +48,10 @@ export interface ServerToClientEvents {
   "room:updated": (room: ChatRoom) => void;
   "room:deleted": (roomId: string) => void;
   "room:messages": (messages: Message[]) => void;
-  "room:participant:update": (roomId: string, participants: string[]) => void;
+  "room:participant:update": (
+    roomId: string,
+    participants: { id: string; avatar: string }[]
+  ) => void;
   "typing:start": (data: { userId: string; roomId: string }) => void;
   "typing:stop": (data: { userId: string; roomId: string }) => void;
   "auth:error": (error: { message: string }) => void;

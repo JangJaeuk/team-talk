@@ -25,14 +25,14 @@ export const JoinedRoomListWrapper = () => {
     [router]
   );
 
-  const { isLoading, fetchRooms, filterRoomsByQuery, getRooms } =
+  const { isLoading, rooms, fetchRooms, filterRoomsByQuery } =
     useJoinedRoomList();
 
   const wrappedFetchRooms = async () => {
     await fetchRooms();
   };
 
-  const { handleEnterRoom, handleLeaveRoom } = useJoinedRoomListSocket({
+  const { handleEnterRoom } = useJoinedRoomListSocket({
     onJoinRoom,
     fetchRooms: wrappedFetchRooms,
   });
@@ -57,9 +57,8 @@ export const JoinedRoomListWrapper = () => {
     }
   };
 
-  const joinedRooms = getRooms();
-  const filteredJoinedRooms = joinedRooms
-    ? filterRoomsByQuery(joinedRooms, searchQuery)
+  const filteredJoinedRooms = rooms
+    ? filterRoomsByQuery(rooms, searchQuery)
     : [];
 
   return (
@@ -73,12 +72,11 @@ export const JoinedRoomListWrapper = () => {
       />
 
       <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar">
-        {isLoading || !joinedRooms ? (
+        {isLoading || !rooms ? (
           <JoinedRoomListSkeleton />
         ) : filteredJoinedRooms.length > 0 ? (
           <JoinedRoomList
             rooms={filteredJoinedRooms}
-            onLeaveRoom={handleLeaveRoom}
             onEnterRoom={handleEnterRoom}
           />
         ) : (

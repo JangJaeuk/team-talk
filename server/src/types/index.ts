@@ -6,6 +6,7 @@ declare global {
         uid: string;
         email?: string;
         nickname?: string;
+        avatar?: string;
       };
     }
   }
@@ -27,7 +28,7 @@ export interface ChatRoom {
   createdBy: string;
   createdAt: Date;
   lastMessage?: Message | null;
-  participants: string[]; // 참여자 ID 목록
+  participants: { id: string; avatar: string; nickname: string }[]; // 참여자 정보 목록
 }
 
 export interface RoomParticipant {
@@ -61,7 +62,10 @@ export interface ServerToClientEvents {
   "room:join:success": (room: ChatRoom) => void; // 추가: 방 가입 성공
   "room:leave:success": (roomId: string) => void; // 추가: 방 탈퇴 성공
   "room:list": (rooms: ChatRoom[]) => void;
-  "room:participant:update": (roomId: string, participants: string[]) => void;
+  "room:participant:update": (
+    roomId: string,
+    participants: { id: string; avatar: string; nickname: string }[]
+  ) => void;
   "room:messages": (messages: Message[]) => void;
   "typing:start": (data: { userId: string; roomId: string }) => void;
   "typing:stop": (data: { userId: string; roomId: string }) => void;
