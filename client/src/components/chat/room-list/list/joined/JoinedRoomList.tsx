@@ -1,3 +1,4 @@
+import { useAuthStore } from "@/store/useAuthStore";
 import { Room } from "@/types/room";
 
 const formatDate = (date: Date) => {
@@ -48,6 +49,7 @@ interface Props {
 }
 
 export const JoinedRoomList = ({ rooms, onEnterRoom, onLeaveRoom }: Props) => {
+  const { user } = useAuthStore();
   return (
     <div className="space-y-2 sm:space-y-4 p-2 sm:p-4">
       {rooms.map((room) => (
@@ -72,7 +74,11 @@ export const JoinedRoomList = ({ rooms, onEnterRoom, onLeaveRoom }: Props) => {
                 <p className="text-sm text-gray-600 line-clamp-2">
                   {room.lastMessage.type === "system"
                     ? room.lastMessage.content
-                    : `${room.lastMessage.sender.nickname}:${room.lastMessage.content}`}
+                    : `${
+                        room.lastMessage.sender.id === user?.id
+                          ? "나"
+                          : room.lastMessage.sender.nickname
+                      }: ${room.lastMessage.content}`}
                 </p>
               )}
             </div>
