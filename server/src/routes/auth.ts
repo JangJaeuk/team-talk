@@ -19,6 +19,8 @@ router.post("/register", async (req, res) => {
     // Refresh Token을 HttpOnly 쿠키로 설정
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
+      secure: true, // HTTPS에서만 쿠키 전송
+      sameSite: "none", // Cross-Origin 쿠키 전송 허용
       maxAge: REFRESH_TOKEN_EXPIRES_NUMBER * 24 * 60 * 60 * 1000, // 14일
       path: "/",
     });
@@ -41,6 +43,8 @@ router.post("/login", async (req, res) => {
     // Refresh Token을 HttpOnly 쿠키로 설정
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
+      secure: true, // HTTPS에서만 쿠키 전송
+      sameSite: "none", // Cross-Origin 쿠키 전송 허용
       maxAge: REFRESH_TOKEN_EXPIRES_NUMBER * 24 * 60 * 60 * 1000, // 14일
       path: "/",
     });
