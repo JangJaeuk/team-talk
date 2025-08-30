@@ -316,9 +316,18 @@ export const messageService = {
     if (!doc.exists) {
       return null;
     }
+    const data = doc.data();
+    if (!data) return null;
+    const senderDoc = await db.collection("users").doc(data.sender.id).get();
+    const senderData = senderDoc.data();
+
     return {
       id: doc.id,
-      ...doc.data(),
+      ...data,
+      sender: {
+        ...data.sender,
+        avatar: senderData?.avatar,
+      },
     } as Message;
   },
 
@@ -369,18 +378,32 @@ export const messageService = {
       .orderBy("createdAt", "asc")
       .get();
 
-    return snapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        createdAt: convertToDate(data.createdAt),
-        readBy: (data.readBy || []).map((read: any) => ({
-          ...read,
-          readAt: convertToDate(read.readAt),
-        })),
-      } as Message;
-    });
+    const messages = await Promise.all(
+      snapshot.docs.map(async (doc) => {
+        const data = doc.data();
+        const senderDoc = await db
+          .collection("users")
+          .doc(data.sender.id)
+          .get();
+        const senderData = senderDoc.data();
+
+        return {
+          id: doc.id,
+          ...data,
+          sender: {
+            ...data.sender,
+            avatar: senderData?.avatar || "avatar1",
+          },
+          createdAt: convertToDate(data.createdAt),
+          readBy: (data.readBy || []).map((read: any) => ({
+            ...read,
+            readAt: convertToDate(read.readAt),
+          })),
+        } as Message;
+      })
+    );
+
+    return messages;
   },
 
   async getMessages(
@@ -408,18 +431,30 @@ export const messageService = {
 
       // 실제로 요청한 것보다 1개 더 많은 문서를 가져와서 다음 페이지 존재 여부 확인
       const snapshot = await query.limit(limit + 1).get();
-      const messages = snapshot.docs.slice(0, limit).map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: convertToDate(data.createdAt),
-          readBy: (data.readBy || []).map((read: any) => ({
-            ...read,
-            readAt: convertToDate(read.readAt),
-          })),
-        } as Message;
-      });
+      const messages = await Promise.all(
+        snapshot.docs.slice(0, limit).map(async (doc) => {
+          const data = doc.data();
+          const senderDoc = await db
+            .collection("users")
+            .doc(data.sender.id)
+            .get();
+          const senderData = senderDoc.data();
+
+          return {
+            id: doc.id,
+            ...data,
+            sender: {
+              ...data.sender,
+              avatar: senderData?.avatar,
+            },
+            createdAt: convertToDate(data.createdAt),
+            readBy: (data.readBy || []).map((read: any) => ({
+              ...read,
+              readAt: convertToDate(read.readAt),
+            })),
+          } as Message;
+        })
+      );
 
       // limit + 1개의 문서가 있다면 다음 페이지가 존재
       const hasNextPage = snapshot.docs.length > limit;

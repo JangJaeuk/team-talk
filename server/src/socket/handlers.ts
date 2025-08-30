@@ -107,7 +107,7 @@ export const setupSocketHandlers = (
           email: socket.data.user.email!,
           nickname: socket.data.user.nickname,
           isOnline: true,
-          avatar: socket.data.user.avatar,
+          avatar: socket.data.user.avatar || "avatar1",
         },
         roomId,
         type: "system" as const,
@@ -158,7 +158,7 @@ export const setupSocketHandlers = (
           email: socket.data.user.email!,
           nickname: socket.data.user.nickname,
           isOnline: true,
-          avatar: socket.data.user.avatar,
+          avatar: socket.data.user.avatar || "avatar1",
         },
         roomId,
         type: "system" as const,
@@ -200,11 +200,10 @@ export const setupSocketHandlers = (
       const messageId = await messageService.createMessage({
         ...messageData,
         sender: {
+          ...messageData.sender,
           id: socket.data.user.uid,
           email: socket.data.user.email!,
-          nickname: messageData.sender.nickname,
           isOnline: true,
-          avatar: socket.data.user.avatar,
         },
       });
 
@@ -212,11 +211,10 @@ export const setupSocketHandlers = (
         id: messageId,
         ...messageData,
         sender: {
+          ...messageData.sender,
           id: socket.data.user.uid,
           email: socket.data.user.email!,
-          nickname: messageData.sender.nickname,
           isOnline: true,
-          avatar: socket.data.user.avatar,
         },
         createdAt: new Date(),
         isEdited: false,

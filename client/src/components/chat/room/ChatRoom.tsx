@@ -93,7 +93,7 @@ export const ChatRoom = ({ roomId }: Props) => {
         <>
           <div
             ref={chatContainerRef}
-            className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col-reverse p-4"
+            className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col-reverse pl-2 pr-4 py-4"
           >
             <div key="typing-indicator" className="text-gray-500 text-sm mb-2">
               {getTypingMessage()}

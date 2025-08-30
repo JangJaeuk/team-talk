@@ -130,6 +130,7 @@ router.get("/me", authMiddleware, async (req: Request, res) => {
       email: userData?.email,
       nickname: userData?.nickname,
       isOnline: userData?.isOnline,
+      avatar: userData?.avatar,
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
