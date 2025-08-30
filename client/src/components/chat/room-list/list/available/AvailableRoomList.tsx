@@ -41,16 +41,16 @@ export const AvailableRoomList = ({ rooms }: Props) => {
       {rooms.map((room) => (
         <div
           key={room.id}
-          className="bg-white rounded-lg shadow p-3 sm:p-4 hover:bg-gray-50 transition-colors cursor-pointer h-[120px] sm:h-[130px]"
+          className="bg-white rounded-lg shadow p-2.5 sm:p-4 hover:bg-gray-50 transition-colors h-[80px] sm:h-[110px]"
         >
           <div className="flex flex-col justify-between h-full">
             <div>
-              <div className="flex items-center justify-between gap-2 mb-1 sm:mb-2">
-                <h3 className="text-base sm:text-lg font-bold truncate">
+              <div className="flex items-center justify-between gap-2 mb-0.5 sm:mb-1">
+                <h3 className="text-sm sm:text-lg font-bold truncate">
                   {room.name}
                 </h3>
                 <button
-                  className="shrink-0 px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-500 text-white text-xs sm:text-sm font-medium rounded hover:bg-blue-600 disabled:opacity-50 transition-colors"
+                  className="shrink-0 px-2 py-1 sm:py-1.5 bg-blue-500 text-white text-xs sm:text-sm font-medium rounded hover:bg-blue-600 disabled:opacity-50 transition-colors"
                   onClick={() => {
                     joinRoom(room.id);
                   }}
@@ -59,15 +59,15 @@ export const AvailableRoomList = ({ rooms }: Props) => {
                   {isPending ? "참여중..." : "참여하기"}
                 </button>
               </div>
-              <p className="text-sm text-gray-600 line-clamp-2">
+              <p className="text-xs sm:text-sm text-gray-600 line-clamp-1">
                 {room.description}
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500">
               <span className="shrink-0">참여자 {room.participantCount}명</span>
               {room.lastMessage && (
                 <>
-                  <span className="hidden sm:inline text-gray-300">|</span>
+                  <span className="text-gray-300">•</span>
                   <span className="truncate">
                     {formatDate(new Date(room.lastMessage.createdAt))}
                   </span>

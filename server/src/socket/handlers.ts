@@ -199,6 +199,7 @@ export const setupSocketHandlers = (
     try {
       const messageId = await messageService.createMessage({
         ...messageData,
+        type: "normal" as const,
         sender: {
           ...messageData.sender,
           id: socket.data.user.uid,
@@ -210,6 +211,7 @@ export const setupSocketHandlers = (
       const message = {
         id: messageId,
         ...messageData,
+        type: "normal" as const,
         sender: {
           ...messageData.sender,
           id: socket.data.user.uid,

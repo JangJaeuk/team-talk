@@ -47,7 +47,7 @@ export const roomQueries = {
 export const roomMutations = {
   create: () => ({
     mutationFn: async (data: RoomFormData) => {
-      const response = await httpClient.post<Room>("/rooms", data);
+      const response = await httpClient.post<{ id: string }>("/rooms", data);
       return response.data;
     },
   }),

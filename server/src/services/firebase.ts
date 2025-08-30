@@ -75,11 +75,14 @@ export const roomService = {
               .orderBy("createdAt", "desc")
               .get();
 
-            // 사용자가 읽지 않은 메시지 수 계산
+            // 사용자가 읽지 않은 메시지 수 계산 (system:create 타입 제외)
             unreadCount = messagesSnapshot.docs.filter((doc) => {
               const message = doc.data();
-              return !message.readBy?.some(
-                (read: { userId: string }) => read.userId === userId
+              return (
+                message.type !== "system:create" &&
+                !message.readBy?.some(
+                  (read: { userId: string }) => read.userId === userId
+                )
               );
             }).length;
           }

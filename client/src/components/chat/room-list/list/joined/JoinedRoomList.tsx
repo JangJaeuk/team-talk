@@ -55,13 +55,13 @@ export const JoinedRoomList = ({ rooms, onEnterRoom, onLeaveRoom }: Props) => {
       {rooms.map((room) => (
         <div
           key={room.id}
-          className="bg-white rounded-lg shadow p-3 sm:p-4 hover:bg-gray-50 transition-colors cursor-pointer h-[120px] sm:h-[130px]"
+          className="bg-white rounded-lg shadow p-2 sm:p-3.5 hover:bg-gray-50 transition-colors cursor-pointer h-[60px] sm:h-[80px]"
           onClick={() => onEnterRoom(room.id)}
         >
-          <div className="flex flex-col justify-between h-full">
-            <div>
-              <div className="flex items-center gap-2 mb-1 sm:mb-2">
-                <h3 className="text-base sm:text-lg font-bold truncate flex-1">
+          <div className="flex flex-col gap-1 sm:gap-2.5">
+            <div className="flex items-center justify-between min-w-0">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <h3 className="text-base sm:text-lg font-bold truncate">
                   {room.name}
                 </h3>
                 {room.unreadCount > 0 && (
@@ -71,30 +71,22 @@ export const JoinedRoomList = ({ rooms, onEnterRoom, onLeaveRoom }: Props) => {
                 )}
               </div>
               {room.lastMessage && (
-                <p className="text-sm text-gray-600 line-clamp-2">
-                  {room.lastMessage.type === "system"
-                    ? room.lastMessage.content
-                    : `${
-                        room.lastMessage.sender.id === user?.id
-                          ? "나"
-                          : room.lastMessage.sender.nickname
-                      }: ${room.lastMessage.content}`}
-                </p>
+                <span className="shrink-0 text-xs sm:text-sm text-gray-500 ml-4">
+                  {formatDate(new Date(room.lastMessage.createdAt))}
+                </span>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
-              <span className="shrink-0">
-                참여자 {room.participants.length}명
-              </span>
-              {room.lastMessage && (
-                <>
-                  <span className="hidden sm:inline text-gray-300">|</span>
-                  <span className="truncate">
-                    {formatDate(new Date(room.lastMessage.createdAt))}
-                  </span>
-                </>
-              )}
-            </div>
+            {room.lastMessage && room.lastMessage.type !== "system:create" && (
+              <p className="text-xs sm:text-sm text-gray-600 line-clamp-1 mt-0.5 sm:mt-0">
+                {room.lastMessage.type === "system"
+                  ? room.lastMessage.content
+                  : `${
+                      room.lastMessage.sender.id === user?.id
+                        ? "나"
+                        : room.lastMessage.sender.nickname
+                    }: ${room.lastMessage.content}`}
+              </p>
+            )}
           </div>
         </div>
       ))}

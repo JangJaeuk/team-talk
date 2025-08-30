@@ -2,16 +2,16 @@
 
 import { useJoinedRoomList } from "@/hooks/chat/room-list/joined/useJoinedRoomList";
 import { useJoinedRoomListSocket } from "@/hooks/chat/room-list/joined/useJoinedRoomListSocket";
-import { roomKeys, roomMutations } from "@/queries/room";
+import { roomMutations } from "@/queries/room";
 import { RoomFormData } from "@/types/room";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
-import { ChatRoomListSkeleton } from "../../ChatRoomListSkeleton";
 import { CreateRoomModal } from "../../modal/CreateRoomModal";
 import { RoomSearchBar } from "../../tool/RoomSearchBar";
 import { JoinedRoomList } from "./JoinedRoomList";
 import { JoinedRoomListEmpty } from "./JoinedRoomListEmpty";
+import { JoinedRoomListSkeleton } from "./JoinedRoomListSkeleton";
 
 export const JoinedRoomListWrapper = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -41,12 +41,11 @@ export const JoinedRoomListWrapper = () => {
     setSearchQuery(query);
   };
 
-  const queryClient = useQueryClient();
   const { mutateAsync: createRoom } = useMutation({
     ...roomMutations.create(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: roomKeys.joinedLists() });
+    onSuccess: (data) => {
       setShowCreateModal(false);
+      router.push(`/rooms/${data.id}`);
     },
   });
 
@@ -75,7 +74,7 @@ export const JoinedRoomListWrapper = () => {
 
       <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar">
         {isLoading || !joinedRooms ? (
-          <ChatRoomListSkeleton />
+          <JoinedRoomListSkeleton />
         ) : filteredJoinedRooms.length > 0 ? (
           <JoinedRoomList
             rooms={filteredJoinedRooms}

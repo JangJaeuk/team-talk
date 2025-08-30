@@ -25,7 +25,7 @@ export interface Message {
   sender: User & { avatar: string };
   createdAt: Date;
   isEdited: boolean;
-  type?: "normal" | "system";
+  type?: "normal" | "system" | "system:create";
   readBy: {
     userId: string;
     readAt: Date;

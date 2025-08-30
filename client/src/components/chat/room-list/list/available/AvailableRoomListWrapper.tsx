@@ -4,10 +4,10 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
-import { ChatRoomListSkeleton } from "../../ChatRoomListSkeleton";
 import { RoomSearchBar } from "../../tool/RoomSearchBar";
 import { AvailableRoomList } from "./AvailableRoomList";
 import { AvailableRoomListEmpty } from "./AvailableRoomListEmpty";
+import { AvailableRoomListSkeleton } from "./AvailableRoomListSkeleton";
 
 const ROOMS_PER_PAGE = 30;
 
@@ -55,7 +55,7 @@ export const AvailableRoomListWrapper = () => {
 
       <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar">
         {isLoading || !data ? (
-          <ChatRoomListSkeleton />
+          <AvailableRoomListSkeleton />
         ) : allRooms.length > 0 ? (
           <>
             <AvailableRoomList rooms={allRooms} />

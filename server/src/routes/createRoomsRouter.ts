@@ -65,6 +65,37 @@ export const createRoomsRouter = (
         participants: [req.user!.uid],
       });
 
+      const systemMessage = await messageService.createMessage({
+        roomId,
+        content: `채팅방이 생성되었습니다.`,
+        sender: {
+          id: "system",
+          email: "system",
+          nickname: "system",
+          isOnline: true,
+          avatar: "avatar1",
+        },
+        type: "system:create",
+      });
+
+      // 해당 방의 모든 클라이언트에게 새 메시지 전송
+      io.to(roomId).emit("message:new", {
+        id: systemMessage,
+        roomId,
+        content: `채팅방이 생성되었습니다.`,
+        sender: {
+          id: "system",
+          email: "system",
+          nickname: "system",
+          isOnline: true,
+          avatar: "avatar1",
+        },
+        type: "system:create",
+        createdAt: new Date(),
+        isEdited: false,
+        readBy: [],
+      });
+
       // 모든 클라이언트에게 업데이트된 방 목록 전송
       const rooms = await roomService.getJoinedRooms(req.user!.uid);
       io.emit("room:list", rooms);

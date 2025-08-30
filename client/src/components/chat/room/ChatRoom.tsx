@@ -126,8 +126,10 @@ export const ChatRoom = ({ roomId }: Props) => {
                       }}
                     />
                   )}
-                  {msg.type === "system" ? (
-                    <SystemMessage message={msg} />
+                  {msg.type === "system" || msg.type === "system:create" ? (
+                    msg.type === "system:create" ? null : (
+                      <SystemMessage message={msg} />
+                    )
                   ) : (
                     <UserMessage
                       message={msg}
