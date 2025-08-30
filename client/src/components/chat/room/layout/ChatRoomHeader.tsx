@@ -18,7 +18,7 @@ export const ChatRoomHeader = ({
 
   return (
     <div className="bg-white shadow-md">
-      <div className="max-w-5xl mx-auto px-3 py-2 sm:px-4 sm:py-3 flex items-center justify-between">
+      <div className="px-3 py-2 sm:px-4 sm:py-3 flex items-center justify-between">
         <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={() => router.push("/rooms")}

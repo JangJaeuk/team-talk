@@ -81,7 +81,7 @@ export const ChatRoom = ({ roomId }: Props) => {
   }
 
   return (
-    <div className="flex flex-col h-screen max-w-5xl mx-auto">
+    <div className="flex flex-col h-screen">
       <ChatRoomHeader
         room={room}
         isJoined={isJoined || false}
@@ -93,7 +93,7 @@ export const ChatRoom = ({ roomId }: Props) => {
         <>
           <div
             ref={chatContainerRef}
-            className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col-reverse pl-2 pr-4 py-4"
+            className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col-reverse pl-2 pr-4 pt-4 pb-0 sm:pb-4"
           >
             <div key="typing-indicator" className="text-gray-500 text-sm mb-2">
               {getTypingMessage()}

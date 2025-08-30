@@ -10,7 +10,7 @@ export const MessageForm = ({ newMessage, onSubmit, onChange }: Props) => {
       onSubmit={onSubmit}
       className="p-2 sm:p-4 bg-white shadow-md border-t border-gray-100"
     >
-      <div className="flex gap-2 max-w-5xl mx-auto">
+      <div className="flex gap-2">
         <input
           type="text"
           value={newMessage}
