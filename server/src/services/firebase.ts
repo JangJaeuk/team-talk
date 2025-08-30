@@ -193,8 +193,12 @@ export const roomService = {
 
     // 최신 메시지 시간 순으로 정렬
     roomsWithDetails.sort((a, b) => {
-      const aTime = (a.lastMessage?.createdAt as any)?._seconds || 0;
-      const bTime = (b.lastMessage?.createdAt as any)?._seconds || 0;
+      const aTime = a.lastMessage
+        ? new Date(a.lastMessage.createdAt).getTime()
+        : 0;
+      const bTime = b.lastMessage
+        ? new Date(b.lastMessage.createdAt).getTime()
+        : 0;
       return bTime - aTime;
     });
 

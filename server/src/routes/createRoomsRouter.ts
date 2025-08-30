@@ -82,8 +82,8 @@ export const createRoomsRouter = (
       const { roomId } = req.params;
       const room = await roomService.joinRoom(roomId, req.user!.uid);
 
-      // 시스템 메시지 저장
-      await messageService.createMessage({
+      // 시스템 메시지 저장 및 전송
+      const systemMessage = await messageService.createMessage({
         roomId,
         content: `${
           req.user!.nickname || "알 수 없는 사용자"
@@ -93,8 +93,29 @@ export const createRoomsRouter = (
           email: "system",
           nickname: "system",
           isOnline: true,
+          avatar: "avatar1",
         },
         type: "system",
+      });
+
+      // 해당 방의 모든 클라이언트에게 새 메시지 전송
+      io.to(roomId).emit("message:new", {
+        id: systemMessage,
+        roomId,
+        content: `${
+          req.user!.nickname || "알 수 없는 사용자"
+        }님이 참여했습니다.`,
+        sender: {
+          id: "system",
+          email: "system",
+          nickname: "system",
+          isOnline: true,
+          avatar: "avatar1",
+        },
+        type: "system",
+        createdAt: new Date(),
+        isEdited: false,
+        readBy: [],
       });
 
       // 모든 클라이언트에게 업데이트된 방 목록 전송

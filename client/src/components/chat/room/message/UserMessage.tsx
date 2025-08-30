@@ -1,4 +1,5 @@
 import type { Message } from "@/types";
+import Image from "next/image";
 import { FC } from "react";
 
 interface Props {
@@ -16,6 +17,7 @@ interface Props {
   }>;
   participants: string[];
   messages: Message[];
+  prevMessage?: Message; // 이전 메시지 정보 추가
 }
 
 export const UserMessage = ({
@@ -27,8 +29,22 @@ export const UserMessage = ({
   MessageSettingsMenu,
   participants,
   messages,
+  prevMessage,
 }: Props) => {
   const isCurrentUser = message.sender.id === userId;
+
+  // 이전 메시지와 현재 메시지 사이의 시간 차이 계산 (3분 = 180000ms)
+  const shouldShowProfile = () => {
+    if (isCurrentUser) return false; // 내 메시지는 프로필 표시 안 함
+    if (!prevMessage) return true; // 첫 메시지는 무조건 프로필 표시
+
+    const timeDiff =
+      new Date(message.createdAt).getTime() -
+      new Date(prevMessage.createdAt).getTime();
+    const isDifferentSender = prevMessage.sender.id !== message.sender.id;
+
+    return timeDiff > 180000 || isDifferentSender;
+  };
 
   return (
     <div
@@ -56,15 +72,34 @@ export const UserMessage = ({
             />
           </div>
         )}
-        <div
-          className={`p-2 rounded-lg w-full break-words ${
-            isCurrentUser ? "bg-blue-500 text-white" : "bg-gray-200"
-          }`}
-        >
-          <div className="font-bold text-sm">{message.sender.nickname}</div>
-          <div>{message.content}</div>
-          <div className="text-xs opacity-75">
-            <span>{formatTimestamp(message.createdAt)}</span>
+        <div className="flex gap-2">
+          {!isCurrentUser && (
+            <div className="flex-shrink-0 w-8">
+              {shouldShowProfile() && (
+                <Image
+                  src={`/avatars/${message.sender.avatar ?? "avatar1"}.svg`}
+                  alt={message.sender.nickname}
+                  width={32}
+                  height={32}
+                  className="rounded-full"
+                />
+              )}
+            </div>
+          )}
+          <div
+            className={`p-2 rounded-lg w-full break-words ${
+              isCurrentUser ? "bg-blue-500 text-white" : "bg-gray-200"
+            }`}
+          >
+            {!isCurrentUser && shouldShowProfile() && (
+              <div className="font-bold text-sm mb-1">
+                {message.sender.nickname}
+              </div>
+            )}
+            <div>{message.content}</div>
+            <div className="text-xs opacity-75">
+              <span>{formatTimestamp(message.createdAt)}</span>
+            </div>
           </div>
         </div>
       </div>

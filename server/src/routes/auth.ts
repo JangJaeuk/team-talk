@@ -81,6 +81,7 @@ router.post("/refresh", async (req, res) => {
       email: userDoc.data()?.email,
       nickname: userDoc.data()?.nickname,
       isOnline: true,
+      avatar: userDoc.data()?.avatar,
     };
 
     // 새로운 Access Token 발급

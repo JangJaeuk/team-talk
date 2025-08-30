@@ -138,6 +138,7 @@ export const ChatRoom = ({ roomId }: Props) => {
                       participants={room?.participants || []}
                       messages={messages}
                       setActiveMenuMessageId={setActiveMenuMessageId}
+                      prevMessage={messages[index + 1]}
                     />
                   )}
                 </div>

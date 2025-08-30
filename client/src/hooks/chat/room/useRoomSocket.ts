@@ -213,6 +213,7 @@ export const useRoomSocket = (
           email: user.email,
           nickname: user.nickname,
           isOnline: true,
+          avatar: user.avatar,
         },
       });
     },

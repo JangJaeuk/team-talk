@@ -1,5 +1,6 @@
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { useAuthStore } from "@/store/useAuthStore";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -20,8 +21,19 @@ export const RoomListHeader = () => {
   return (
     <div className="flex justify-between items-center p-4 bg-white shadow-md relative z-10">
       <h1 className="text-2xl font-bold">채팅방 목록</h1>
-      <div className="flex items-center">
-        <span className="mr-4">{user?.nickname}님 환영합니다!</span>
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6">
+            <Image
+              src={`/avatars/${user?.avatar ?? "avatar1"}.svg`}
+              alt={user?.nickname || ""}
+              width={24}
+              height={24}
+              className="rounded-full"
+            />
+          </div>
+          <span>{user?.nickname}님 환영합니다!</span>
+        </div>
         <button
           onClick={handleLogout}
           disabled={isLoading}

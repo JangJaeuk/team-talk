@@ -3,6 +3,7 @@ export interface User {
   email: string;
   nickname: string;
   isOnline: boolean;
+  avatar: string;
 }
 
 export interface ChatRoom {
@@ -21,7 +22,7 @@ export interface Message {
   id: string;
   content: string;
   roomId: string;
-  sender: User;
+  sender: User & { avatar: string };
   createdAt: Date;
   isEdited: boolean;
   type?: "normal" | "system";

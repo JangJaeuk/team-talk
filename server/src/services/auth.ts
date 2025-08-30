@@ -40,6 +40,10 @@ export const authService = {
       // 비밀번호 해싱
       const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
+      // 랜덤 아바타 선택
+      const avatarNumber = Math.floor(Math.random() * 5) + 1;
+      const avatar = `avatar${avatarNumber}`;
+
       // 사용자 생성
       const userDoc = await db.collection("users").add({
         email,
@@ -47,6 +51,7 @@ export const authService = {
         nickname,
         isOnline: true,
         lastSeen: new Date(),
+        avatar,
       });
 
       const user: User = {
@@ -54,6 +59,7 @@ export const authService = {
         email,
         nickname,
         isOnline: true,
+        avatar,
       };
 
       // Access Token과 Refresh Token 생성
@@ -97,6 +103,7 @@ export const authService = {
         email: userData.email,
         nickname: userData.nickname,
         isOnline: true,
+        avatar: userData.avatar,
       };
 
       // 온라인 상태 업데이트

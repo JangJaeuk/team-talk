@@ -107,6 +107,7 @@ export const setupSocketHandlers = (
           email: socket.data.user.email!,
           nickname: socket.data.user.nickname,
           isOnline: true,
+          avatar: socket.data.user.avatar,
         },
         roomId,
         type: "system" as const,
@@ -157,6 +158,7 @@ export const setupSocketHandlers = (
           email: socket.data.user.email!,
           nickname: socket.data.user.nickname,
           isOnline: true,
+          avatar: socket.data.user.avatar,
         },
         roomId,
         type: "system" as const,
@@ -202,6 +204,7 @@ export const setupSocketHandlers = (
           email: socket.data.user.email!,
           nickname: messageData.sender.nickname,
           isOnline: true,
+          avatar: socket.data.user.avatar,
         },
       });
 
@@ -213,6 +216,7 @@ export const setupSocketHandlers = (
           email: socket.data.user.email!,
           nickname: messageData.sender.nickname,
           isOnline: true,
+          avatar: socket.data.user.avatar,
         },
         createdAt: new Date(),
         isEdited: false,

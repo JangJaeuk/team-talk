@@ -17,6 +17,7 @@ export interface User {
   nickname: string;
   isOnline: boolean;
   lastSeen?: Date;
+  avatar: string; // avatar1 ~ avatar5
 }
 
 export interface ChatRoom {
