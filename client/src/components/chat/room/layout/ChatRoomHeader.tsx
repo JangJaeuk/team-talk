@@ -17,7 +17,7 @@ export const ChatRoomHeader = ({
   const router = useRouter();
 
   return (
-    <div className="bg-white shadow-md">
+    <div className="bg-white shadow-md relative z-10">
       <div className="px-3 py-2 sm:px-4 sm:py-3 flex items-center justify-between">
         <div className="flex items-center gap-2 sm:gap-3">
           <button

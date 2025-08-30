@@ -42,7 +42,6 @@ export const AvailableRoomList = ({ rooms }: Props) => {
         <div
           key={room.id}
           className="bg-white rounded-lg shadow p-3 sm:p-4 hover:bg-gray-50 transition-colors cursor-pointer h-[120px] sm:h-[130px]"
-          onClick={() => joinRoom(room.id)}
         >
           <div className="flex flex-col justify-between h-full">
             <div>
@@ -52,8 +51,7 @@ export const AvailableRoomList = ({ rooms }: Props) => {
                 </h3>
                 <button
                   className="shrink-0 px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-500 text-white text-xs sm:text-sm font-medium rounded hover:bg-blue-600 disabled:opacity-50 transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  onClick={() => {
                     joinRoom(room.id);
                   }}
                   disabled={isPending}
