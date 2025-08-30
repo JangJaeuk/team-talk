@@ -81,7 +81,7 @@ export const ChatRoom = ({ roomId }: Props) => {
   }
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen max-w-5xl mx-auto">
       <ChatRoomHeader
         room={room}
         isJoined={isJoined || false}

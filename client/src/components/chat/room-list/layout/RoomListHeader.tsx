@@ -1,4 +1,3 @@
-import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { useAuthStore } from "@/store/useAuthStore";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -19,11 +18,11 @@ export const RoomListHeader = () => {
   };
 
   return (
-    <div className="flex justify-between items-center p-4 bg-white shadow-md relative z-10">
-      <h1 className="text-2xl font-bold">채팅방 목록</h1>
-      <div className="flex items-center gap-4">
+    <div className="flex justify-between items-center p-3 sm:p-4 bg-white shadow-md relative z-10">
+      <h1 className="text-lg sm:text-2xl font-bold">팀톡</h1>
+      <div className="flex items-center gap-2 sm:gap-4">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6">
+          <div className="w-5 sm:w-6 h-5 sm:h-6">
             <Image
               src={`/avatars/${user?.avatar ?? "avatar1"}.svg`}
               alt={user?.nickname || ""}
@@ -32,16 +31,17 @@ export const RoomListHeader = () => {
               className="rounded-full"
             />
           </div>
-          <span>{user?.nickname}님 환영합니다!</span>
+          <span className="text-sm sm:text-base">
+            {user?.nickname}님 환영합니다!
+          </span>
         </div>
         <button
           onClick={handleLogout}
           disabled={isLoading}
-          className={`bg-red-500 text-white px-3 py-1.5 rounded flex items-center justify-center space-x-2 w-[90px] whitespace-nowrap text-sm ${
+          className={`bg-red-500 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded flex items-center justify-center gap-1 w-[60px] sm:w-[70px] whitespace-nowrap text-xs transition-colors ${
             isLoading ? "opacity-75 cursor-not-allowed" : "hover:bg-red-600"
           }`}
         >
-          {isLoading && <LoadingSpinner />}
           <span>로그아웃</span>
         </button>
       </div>

@@ -37,18 +37,21 @@ export const AvailableRoomList = ({ rooms }: Props) => {
   });
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-2 sm:space-y-4 p-2 sm:p-4">
       {rooms.map((room) => (
         <div
           key={room.id}
-          className="bg-white rounded-lg shadow p-4 hover:bg-gray-50 transition-colors cursor-pointer h-[130px]"
+          className="bg-white rounded-lg shadow p-3 sm:p-4 hover:bg-gray-50 transition-colors cursor-pointer h-[120px] sm:h-[130px]"
+          onClick={() => joinRoom(room.id)}
         >
           <div className="flex flex-col justify-between h-full">
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-bold truncate">{room.name}</h3>
+              <div className="flex items-center justify-between gap-2 mb-1 sm:mb-2">
+                <h3 className="text-base sm:text-lg font-bold truncate">
+                  {room.name}
+                </h3>
                 <button
-                  className="px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600 disabled:opacity-50"
+                  className="shrink-0 px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-500 text-white text-xs sm:text-sm font-medium rounded hover:bg-blue-600 disabled:opacity-50 transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
                     joinRoom(room.id);
@@ -58,15 +61,19 @@ export const AvailableRoomList = ({ rooms }: Props) => {
                   {isPending ? "참여중..." : "참여하기"}
                 </button>
               </div>
-              <p className="text-gray-600 line-clamp-2">{room.description}</p>
+              <p className="text-sm text-gray-600 line-clamp-2">
+                {room.description}
+              </p>
             </div>
-            <div className="flex items-center gap-4 text-sm text-gray-500">
-              <span>참여자 {room.participantCount}명</span>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
+              <span className="shrink-0">참여자 {room.participantCount}명</span>
               {room.lastMessage && (
-                <span>
-                  마지막 메시지:{" "}
-                  {formatDate(new Date(room.lastMessage.createdAt))}
-                </span>
+                <>
+                  <span className="hidden sm:inline text-gray-300">|</span>
+                  <span className="truncate">
+                    {formatDate(new Date(room.lastMessage.createdAt))}
+                  </span>
+                </>
               )}
             </div>
           </div>

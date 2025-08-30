@@ -16,11 +16,11 @@ export const RoomSearchBar = ({
   onClickButton,
 }: Props) => {
   return (
-    <div className="flex justify-between gap-4 items-center p-4 bg-white shadow-md relative z-10">
+    <div className="flex justify-between gap-2 sm:gap-4 items-center p-3 sm:p-4 bg-white shadow-md relative z-10">
       <div className="flex-1 relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <div className="absolute inset-y-0 left-0 pl-2 sm:pl-3 flex items-center pointer-events-none">
           <svg
-            className="h-5 w-5 text-gray-400"
+            className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -38,16 +38,16 @@ export const RoomSearchBar = ({
           value={searchQuery}
           onChange={(e) => onSearch(e.target.value)}
           placeholder={searchPlaceholder}
-          className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+          className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs sm:text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
         />
       </div>
       {showButton && (
         <button
           onClick={onClickButton}
-          className="inline-flex items-center px-4 py-2.5 bg-blue-500 text-sm font-medium text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+          className="inline-flex items-center px-3 sm:px-4 py-2 sm:py-2.5 bg-blue-500 text-xs sm:text-sm font-medium text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
         >
           <svg
-            className="w-5 h-5 mr-1.5"
+            className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-1.5"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"

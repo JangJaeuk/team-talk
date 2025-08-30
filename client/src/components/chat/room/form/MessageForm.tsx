@@ -6,18 +6,21 @@ interface Props {
 
 export const MessageForm = ({ newMessage, onSubmit, onChange }: Props) => {
   return (
-    <form onSubmit={onSubmit} className="p-4 border-t">
-      <div className="flex gap-2">
+    <form
+      onSubmit={onSubmit}
+      className="p-2 sm:p-4 bg-white shadow-md border-t border-gray-100"
+    >
+      <div className="flex gap-2 max-w-5xl mx-auto">
         <input
           type="text"
           value={newMessage}
           onChange={onChange}
           placeholder="메시지를 입력하세요..."
-          className="flex-1 p-2 border rounded"
+          className="flex-1 p-2 sm:p-3 border border-gray-300 rounded text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="px-3 sm:px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors font-medium text-xs sm:text-sm whitespace-nowrap"
         >
           전송
         </button>
