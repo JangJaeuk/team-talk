@@ -2,15 +2,43 @@ import { Room } from "@/types/room";
 
 const formatDate = (date: Date) => {
   const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
+  const messageDate = new Date(date);
 
-  if (days > 0) return `${days}일 전`;
-  if (hours > 0) return `${hours}시간 전`;
-  if (minutes > 0) return `${minutes}분 전`;
-  return "방금 전";
+  // 시간 포맷 함수
+  const formatTime = (date: Date) => {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? "오후" : "오전";
+    const displayHours = hours % 12 || 12;
+    return `${ampm} ${displayHours}시 ${minutes}분`;
+  };
+
+  // 같은 날짜인지 확인
+  const isSameDay = (d1: Date, d2: Date) => {
+    return (
+      d1.getFullYear() === d2.getFullYear() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getDate() === d2.getDate()
+    );
+  };
+
+  // 같은 해인지 확인
+  const isSameYear = (d1: Date, d2: Date) => {
+    return d1.getFullYear() === d2.getFullYear();
+  };
+
+  if (isSameDay(messageDate, now)) {
+    // 오늘이면 시간만
+    return formatTime(messageDate);
+  } else if (isSameYear(messageDate, now)) {
+    // 올해면 월/일
+    return `${messageDate.getMonth() + 1}월 ${messageDate.getDate()}일`;
+  } else {
+    // 다른 해면 연/월/일
+    return `${messageDate.getFullYear()}년 ${
+      messageDate.getMonth() + 1
+    }월 ${messageDate.getDate()}일`;
+  }
 };
 
 interface Props {
@@ -49,10 +77,12 @@ export const JoinedRoomList = ({ rooms, onEnterRoom, onLeaveRoom }: Props) => {
             <div className="flex items-center gap-4 text-sm text-gray-500">
               <span>참여자 {room.participants.length}명</span>
               {room.lastMessage && (
-                <span>
-                  마지막 메시지:{" "}
-                  {formatDate(new Date(room.lastMessage.createdAt))}
-                </span>
+                <>
+                  <span className="text-gray-300">|</span>
+                  <span>
+                    {formatDate(new Date(room.lastMessage.createdAt))}
+                  </span>
+                </>
               )}
             </div>
           </div>
