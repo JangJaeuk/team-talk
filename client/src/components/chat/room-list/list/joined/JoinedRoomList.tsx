@@ -70,7 +70,9 @@ export const JoinedRoomList = ({ rooms, onEnterRoom, onLeaveRoom }: Props) => {
               </div>
               {room.lastMessage && (
                 <p className="text-sm text-gray-600 line-clamp-2">
-                  {room.lastMessage.sender.nickname}:{room.lastMessage.content}
+                  {room.lastMessage.type === "system"
+                    ? room.lastMessage.content
+                    : `${room.lastMessage.sender.nickname}:${room.lastMessage.content}`}
                 </p>
               )}
             </div>
