@@ -32,8 +32,12 @@ export const useRoom = ({ roomId }: UseRoomProps) => {
 
   const handleLeaveRoom = () => {
     if (!user) return;
-    socketClient.emitSocket("room:leave", roomId);
-    router.push("/rooms"); // 방 목록으로 이동
+    if (window.confirm("정말 채팅방을 탈퇴하시겠습니까?")) {
+      socketClient.emitSocket("room:leave", roomId);
+      router.push("/rooms"); // 방 목록으로 이동
+      // 채팅방 찾기 목록 캐시 무효화
+      queryClient.invalidateQueries({ queryKey: roomKeys.availableLists() });
+    }
   };
 
   const setRoom = useCallback(

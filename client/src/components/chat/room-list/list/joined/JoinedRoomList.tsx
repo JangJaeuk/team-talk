@@ -25,10 +25,11 @@ export const JoinedRoomList = ({ rooms, onEnterRoom, onLeaveRoom }: Props) => {
       {rooms.map((room) => (
         <div
           key={room.id}
-          className="bg-white rounded-lg shadow p-4 hover:bg-gray-50 transition-colors"
+          className="bg-white rounded-lg shadow p-4 hover:bg-gray-50 transition-colors cursor-pointer h-[130px]"
+          onClick={() => onEnterRoom(room.id)}
         >
-          <div className="flex justify-between items-start gap-4">
-            <div className="flex-1 min-w-0">
+          <div className="flex flex-col justify-between h-full">
+            <div>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <h3 className="text-lg font-bold truncate">{room.name}</h3>
@@ -38,35 +39,21 @@ export const JoinedRoomList = ({ rooms, onEnterRoom, onLeaveRoom }: Props) => {
                     </span>
                   )}
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => onEnterRoom(room.id)}
-                    className="px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600"
-                  >
-                    입장
-                  </button>
-                  <button
-                    onClick={() => onLeaveRoom(room.id)}
-                    className="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-md hover:bg-red-600"
-                  >
-                    나가기
-                  </button>
-                </div>
               </div>
               {room.lastMessage && (
-                <p className="text-gray-600 mb-3 line-clamp-2">
+                <p className="text-gray-600 line-clamp-2">
                   {room.lastMessage.content}
                 </p>
               )}
-              <div className="flex items-center gap-4 text-sm text-gray-500">
-                <span>참여자 {room.participants.length}명</span>
-                {room.lastMessage && (
-                  <span>
-                    마지막 메시지:{" "}
-                    {formatDate(new Date(room.lastMessage.createdAt))}
-                  </span>
-                )}
-              </div>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-gray-500">
+              <span>참여자 {room.participants.length}명</span>
+              {room.lastMessage && (
+                <span>
+                  마지막 메시지:{" "}
+                  {formatDate(new Date(room.lastMessage.createdAt))}
+                </span>
+              )}
             </div>
           </div>
         </div>

@@ -66,7 +66,7 @@ export const createRoomsRouter = (
       });
 
       // 모든 클라이언트에게 업데이트된 방 목록 전송
-      const rooms = await roomService.getJoinedRooms();
+      const rooms = await roomService.getJoinedRooms(req.user!.uid);
       io.emit("room:list", rooms);
 
       res.status(201).json({ id: roomId });
@@ -82,8 +82,23 @@ export const createRoomsRouter = (
       const { roomId } = req.params;
       const room = await roomService.joinRoom(roomId, req.user!.uid);
 
+      // 시스템 메시지 저장
+      await messageService.createMessage({
+        roomId,
+        content: `${
+          req.user!.nickname || "알 수 없는 사용자"
+        }님이 참여했습니다.`,
+        sender: {
+          id: "system",
+          email: "system",
+          nickname: "system",
+          isOnline: true,
+        },
+        type: "system",
+      });
+
       // 모든 클라이언트에게 업데이트된 방 목록 전송
-      const rooms = await roomService.getJoinedRooms();
+      const rooms = await roomService.getJoinedRooms(req.user!.uid);
       io.emit("room:list", rooms);
 
       res.json(room);
