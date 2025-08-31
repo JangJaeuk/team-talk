@@ -99,9 +99,12 @@ export const useMessages = ({
         }
       );
 
-      if (message.sender.id === user?.id || isScrolledToBottom()) {
-        scrollToBottom();
-      }
+      // 메시지가 DOM에 렌더링된 후 스크롤
+      setTimeout(() => {
+        if (message.sender.id === user?.id || isScrolledToBottom()) {
+          scrollToBottom();
+        }
+      }, 0);
 
       if (user && isJoined) {
         socketClient.emitSocket("message:read", message.id);
