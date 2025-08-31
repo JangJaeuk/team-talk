@@ -1,11 +1,6 @@
 export const AvailableRoomListSkeleton = () => {
   return (
     <div className="h-full flex flex-col">
-      <div className="flex justify-between gap-2 sm:gap-4 items-center p-3 sm:p-4 bg-white shadow-md relative z-10">
-        <div className="flex-1 h-10 bg-gray-200 rounded-lg animate-pulse" />
-        <div className="w-24 h-10 bg-gray-200 rounded-lg animate-pulse" />
-      </div>
-
       <div className="flex-1 overflow-y-auto space-y-2 sm:space-y-4 p-2 sm:p-4">
         {[...Array(10)].map((_, i) => (
           <div

@@ -1,13 +1,10 @@
 "use client";
 
-import { CustomSuspense } from "@/component/common/CustomSuspense";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { RoomListHeader } from "./layout/RoomListHeader";
 import { RoomListTabs } from "./layout/RoomListTabs";
-import { AvailableRoomListSkeleton } from "./list/available/AvailableRoomListSkeleton";
 import { AvailableRoomListWrapper } from "./list/available/AvailableRoomListWrapper";
-import { JoinedRoomListSkeleton } from "./list/joined/JoinedRoomListSkeleton";
 import { JoinedRoomListWrapper } from "./list/joined/JoinedRoomListWrapper";
 
 export const ChatRoomList = () => {
@@ -36,13 +33,9 @@ export const ChatRoomList = () => {
 
         <div className="flex-1 overflow-hidden">
           {activeTab === "joined" ? (
-            <CustomSuspense fallback={<JoinedRoomListSkeleton />}>
-              <JoinedRoomListWrapper />
-            </CustomSuspense>
+            <JoinedRoomListWrapper />
           ) : (
-            <CustomSuspense fallback={<AvailableRoomListSkeleton />}>
-              <AvailableRoomListWrapper />
-            </CustomSuspense>
+            <AvailableRoomListWrapper />
           )}
         </div>
       </div>
