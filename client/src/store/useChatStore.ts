@@ -1,5 +1,5 @@
 import { socketClient } from "@/lib/socket";
-import { ChatRoom, Message } from "@/types";
+import { ChatRoom, Message } from "@/type";
 import { create } from "zustand";
 
 interface ChatState {

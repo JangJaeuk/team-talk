@@ -1,4 +1,4 @@
-import { ClientToServerEvents, ServerToClientEvents } from "@/types";
+import { ClientToServerEvents, ServerToClientEvents } from "@/type";
 import { EventEmitter } from "events";
 import Cookies from "js-cookie";
 import { io, Socket } from "socket.io-client";

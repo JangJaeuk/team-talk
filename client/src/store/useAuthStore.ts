@@ -1,6 +1,6 @@
 import { httpClient } from "@/lib/axios";
 import { socketClient } from "@/lib/socket";
-import { User } from "@/types";
+import { User } from "@/type";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { create } from "zustand";
