@@ -1,7 +1,8 @@
 "use client";
 
+import { CustomSuspense } from "@/component/common/CustomSuspense";
 import { getAccessToken } from "@/util/token";
-import { ReactNode, Suspense, useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { AuthProvider } from "./authProvider";
 
 export const InitProvider = ({ children }: { children: ReactNode }) => {
@@ -18,8 +19,8 @@ export const InitProvider = ({ children }: { children: ReactNode }) => {
   if (!token) return <>{children}</>;
 
   return (
-    <Suspense>
+    <CustomSuspense>
       <AuthProvider token={token}>{children}</AuthProvider>
-    </Suspense>
+    </CustomSuspense>
   );
 };
