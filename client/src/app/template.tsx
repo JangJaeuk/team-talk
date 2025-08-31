@@ -1,7 +1,12 @@
 "use client";
 
-import { Providers } from "./providers";
+import { InitProvider } from "@/providers/initProvider";
+import { QueryProvider } from "@/providers/queryProvider";
 
 export default function Template({ children }: { children: React.ReactNode }) {
-  return <Providers>{children}</Providers>;
+  return (
+    <QueryProvider>
+      <InitProvider>{children}</InitProvider>
+    </QueryProvider>
+  );
 }
