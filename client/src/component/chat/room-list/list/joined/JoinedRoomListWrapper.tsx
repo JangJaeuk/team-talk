@@ -2,7 +2,7 @@
 
 import { useJoinedRoomList } from "@/hook/chat/room-list/joined/useJoinedRoomList";
 import { useJoinedRoomListSocket } from "@/hook/chat/room-list/joined/useJoinedRoomListSocket";
-import { useCreateRoomMutation } from "@/hook/chat/room-list/mutation/useCreateRoomMutation";
+import { useCreateRoomMutation } from "@/hook/mutation/room/useCreateRoomMutation";
 import { CreateRoomRq } from "@/rqrs/room/createRoomRq";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

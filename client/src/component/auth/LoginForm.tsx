@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { LoadingSpinner } from "@/component/common/LoadingSpinner";
-import { useLoginMutation } from "@/hook/auth/mutation/useLoginMutation";
-import { useRegisterMutation } from "@/hook/auth/mutation/useRegisterMutation";
+import { useLoginMutation } from "@/hook/mutation/auth/useLoginMutation";
+import { useRegisterMutation } from "@/hook/mutation/auth/useRegisterMutation";
 
 export const LoginForm = () => {
   const router = useRouter();

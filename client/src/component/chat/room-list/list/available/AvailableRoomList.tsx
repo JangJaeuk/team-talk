@@ -1,5 +1,5 @@
 import { AvatarGroup } from "@/component/common/AvatarGroup";
-import { useJoinRoomMutation } from "@/hook/chat/room-list/mutation/useJoinRoomMutation";
+import { useJoinRoomMutation } from "@/hook/mutation/room/useJoinRoomMutation";
 import { RoomRs } from "@/rqrs/room/roomRs";
 import { formatTimeAgo } from "@/util/date";
 import { useRouter } from "next/navigation";

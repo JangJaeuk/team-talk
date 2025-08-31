@@ -1,4 +1,4 @@
-import { useLogoutMutation } from "@/hook/auth/mutation/useLogoutMutation";
+import { useLogoutMutation } from "@/hook/mutation/auth/useLogoutMutation";
 import { useAuthStore } from "@/store/useAuthStore";
 import Image from "next/image";
 import { useRouter } from "next/navigation";

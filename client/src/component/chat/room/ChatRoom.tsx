@@ -1,9 +1,9 @@
 "use client";
 
-import { useMessages } from "@/hook/chat/room/useMessages";
+import { useMessages } from "@/hook/chat/room/message/useMessages";
+import { useTyping } from "@/hook/chat/room/message/useTyping";
 import { useRoom } from "@/hook/chat/room/useRoom";
 import { useRoomSocket } from "@/hook/chat/room/useRoomSocket";
-import { useTyping } from "@/hook/chat/room/useTyping";
 import { useAuthStore } from "@/store/useAuthStore";
 import { formatDate, isSameDay } from "@/util/date";
 import { useRouter } from "next/navigation";
