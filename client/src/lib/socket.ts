@@ -1,6 +1,6 @@
 import { ClientToServerEvents, ServerToClientEvents } from "@/type";
+import { getAccessToken, setAccessToken } from "@/util/token";
 import { EventEmitter } from "events";
-import Cookies from "js-cookie";
 import { io, Socket } from "socket.io-client";
 
 class SocketClient extends EventEmitter {
@@ -27,10 +27,6 @@ class SocketClient extends EventEmitter {
     return SocketClient.instance;
   }
 
-  private getToken(): string | undefined {
-    return Cookies.get("accessToken");
-  }
-
   private async refreshToken(): Promise<string | null> {
     try {
       const response = await fetch(`${this.SOCKET_URL}/api/auth/refresh`, {
@@ -44,10 +40,7 @@ class SocketClient extends EventEmitter {
         return null;
       }
       const data = await response.json();
-      Cookies.set("accessToken", data.accessToken, {
-        path: "/",
-        expires: 14, // 14일
-      });
+      setAccessToken(data.accessToken);
       return data.accessToken;
     } catch (error) {
       console.error("[Socket] Token refresh failed:", error);
@@ -67,7 +60,7 @@ class SocketClient extends EventEmitter {
       this.disconnect();
     }
 
-    const token = this.getToken();
+    const token = getAccessToken();
     if (!token) {
       console.error("[Socket] 토큰이 없음");
       throw new Error("Authentication required");

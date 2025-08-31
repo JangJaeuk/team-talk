@@ -1,5 +1,9 @@
+import {
+  getAccessToken,
+  removeAccessToken,
+  setAccessToken,
+} from "@/util/token";
 import axios, { AxiosInstance } from "axios";
-import Cookies from "js-cookie";
 
 interface TokenResponse {
   accessToken: string;
@@ -37,7 +41,7 @@ class HttpClient {
     // 요청 인터셉터 - Access Token 추가
     this.api.interceptors.request.use(
       (config) => {
-        const accessToken = this.getAccessToken();
+        const accessToken = getAccessToken();
         if (accessToken) {
           config.headers.Authorization = `Bearer ${accessToken}`;
         }
@@ -78,7 +82,7 @@ class HttpClient {
               return this.api(originalRequest);
             }
           } catch (error) {
-            this.onRefreshFailure(error);
+            this.onRefreshFailure();
             return Promise.reject(error);
           } finally {
             this.refreshing = false;
@@ -96,9 +100,9 @@ class HttpClient {
       const response = await this.api.post<TokenResponse>("/auth/refresh");
 
       const { accessToken } = response.data;
-      this.setAccessToken(accessToken);
+      setAccessToken(accessToken);
       return accessToken;
-    } catch (error) {
+    } catch {
       this.handleUnauthorized();
       return null;
     }
@@ -109,26 +113,13 @@ class HttpClient {
     this.refreshSubscribers = [];
   }
 
-  private onRefreshFailure(error: unknown): void {
+  private onRefreshFailure(): void {
     this.refreshSubscribers = [];
     this.handleUnauthorized();
   }
 
-  private getAccessToken(): string | undefined {
-    return Cookies.get("accessToken");
-  }
-
-  private setAccessToken(token: string): void {
-    Cookies.set("accessToken", token, {
-      path: "/",
-      expires: 14, // 14일
-    });
-  }
-
   private handleUnauthorized(): void {
-    Cookies.remove("accessToken", {
-      path: "/",
-    });
+    removeAccessToken();
     window.location.href = "/login";
   }
 

@@ -1,20 +1,17 @@
+import { useLogoutMutation } from "@/hook/auth/mutation/useLogoutMutation";
 import { useAuthStore } from "@/store/useAuthStore";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 export const RoomListHeader = () => {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
-  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuthStore();
+  const { logout, isPending } = useLogoutMutation(() => {
+    router.push("/login");
+  });
 
-  const handleLogout = async () => {
-    setIsLoading(true);
-    try {
-      await logout(() => router.push("/login"));
-    } finally {
-      setIsLoading(false);
-    }
+  const handleLogout = () => {
+    logout();
   };
 
   return (
@@ -38,9 +35,9 @@ export const RoomListHeader = () => {
           </div>
           <button
             onClick={handleLogout}
-            disabled={isLoading}
+            disabled={isPending}
             className={`bg-red-500 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded flex items-center justify-center gap-1 w-[60px] sm:w-[70px] whitespace-nowrap text-xs transition-colors ${
-              isLoading ? "opacity-75 cursor-not-allowed" : "hover:bg-red-600"
+              isPending ? "opacity-75 cursor-not-allowed" : "hover:bg-red-600"
             }`}
           >
             <span>로그아웃</span>

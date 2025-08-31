@@ -1,29 +1,25 @@
 "use client";
 
-import { useAuthStore } from "@/store/useAuthStore";
-import { ReactNode, useEffect, useState } from "react";
+import { getAccessToken } from "@/util/token";
+import { ReactNode, Suspense, useEffect, useState } from "react";
+import { AuthProvider } from "./authProvider";
 
 export const InitProvider = ({ children }: { children: ReactNode }) => {
-  const [mounted, setMounted] = useState(false);
-  const { initialize } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(true);
+  const [token, setToken] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    const init = async () => {
-      try {
-        await initialize();
-      } catch (error) {
-        console.error("Initialization error:", error);
-      }
-    };
+    setToken(getAccessToken());
+    setIsLoading(false);
+  }, []);
 
-    init();
-    setMounted(true);
-  }, [initialize]);
+  if (isLoading) return null;
 
-  // 초기화가 완료되기 전까지는 아무것도 렌더링하지 않음
-  if (!mounted) {
-    return null;
-  }
+  if (!token) return <>{children}</>;
 
-  return <>{children}</>;
+  return (
+    <Suspense>
+      <AuthProvider token={token}>{children}</AuthProvider>
+    </Suspense>
+  );
 };

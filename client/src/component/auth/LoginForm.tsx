@@ -1,10 +1,11 @@
 "use client";
 
-import { useAuthStore } from "@/store/useAuthStore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { LoadingSpinner } from "@/component/common/LoadingSpinner";
+import { useLoginMutation } from "@/hook/auth/mutation/useLoginMutation";
+import { useRegisterMutation } from "@/hook/auth/mutation/useRegisterMutation";
 
 export const LoginForm = () => {
   const router = useRouter();
@@ -13,34 +14,44 @@ export const LoginForm = () => {
   const [password, setPassword] = useState("");
   const [nickname, setNickname] = useState("");
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const { register, login, error, setError } = useAuthStore();
+  const [error, setError] = useState<string | null>(null);
+  const { login, isPending: isLoginPending } = useLoginMutation(
+    () => {
+      router.replace("/rooms");
+    },
+    (error) => {
+      console.log("이거 확인", error);
+      setError(error.errorMessage);
+      setSuccessMessage(null);
+    }
+  );
+  const { register, isPending: isRegisterPending } = useRegisterMutation(
+    () => {
+      setSuccessMessage("회원가입이 완료되었습니다. 로그인해주세요.");
+      setIsRegister(false);
+      setEmail("");
+      setPassword("");
+      setNickname("");
+    },
+    (error) => {
+      setError(error.errorMessage);
+      setSuccessMessage(null);
+    }
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccessMessage(null);
-    setIsLoading(true);
 
-    try {
-      if (isRegister) {
-        await register(email, password, nickname);
-        setSuccessMessage("회원가입이 완료되었습니다. 로그인해주세요.");
-        setIsRegister(false);
-        setEmail("");
-        setPassword("");
-        setNickname("");
-      } else {
-        await login(email, password);
-        router.replace("/rooms");
-      }
-    } catch (error) {
-      console.error("Auth error:", error);
-      setSuccessMessage(null);
-    } finally {
-      setIsLoading(false);
+    if (isRegister) {
+      register({ email, password, nickname });
+    } else {
+      login({ email, password });
     }
   };
+
+  const isLoading = isLoginPending || isRegisterPending;
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">

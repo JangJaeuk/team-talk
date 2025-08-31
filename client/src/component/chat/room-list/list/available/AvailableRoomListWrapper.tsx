@@ -1,4 +1,4 @@
-import { useDebounce } from "@/hook/useDebounce";
+import { useDebounce } from "@/hook/common/useDebounce";
 import { roomQueries } from "@/query/room";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useInfiniteQuery } from "@tanstack/react-query";

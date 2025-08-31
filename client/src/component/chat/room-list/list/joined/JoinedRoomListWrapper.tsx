@@ -61,6 +61,8 @@ export const JoinedRoomListWrapper = () => {
     ? filterRoomsByQuery(rooms, searchQuery)
     : [];
 
+  console.log("확인", rooms, isLoading);
+
   return (
     <div className="h-full flex flex-col">
       <RoomSearchBar
