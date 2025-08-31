@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef } from "react";
 interface Props {
   room: RoomRs;
   isOpen: boolean;
+  isModalOpen: boolean;
   onClose: () => void;
   onLeaveRoom: () => void;
   onShowCode: () => void;
@@ -14,6 +15,7 @@ interface Props {
 export const ChatRoomSidePanel = ({
   room,
   isOpen,
+  isModalOpen,
   onClose,
   onLeaveRoom,
   onShowCode,
@@ -39,7 +41,7 @@ export const ChatRoomSidePanel = ({
       }
     };
 
-    if (isOpen) {
+    if (isOpen && !isModalOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 

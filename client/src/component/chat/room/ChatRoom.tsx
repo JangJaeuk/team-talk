@@ -94,6 +94,7 @@ export const ChatRoom = ({ roomId }: Props) => {
         <ChatRoomSidePanel
           room={room}
           isOpen={isSidePanelOpen}
+          isModalOpen={isCodeModalOpen}
           onClose={() => setIsSidePanelOpen(false)}
           onLeaveRoom={handleLeaveRoom}
           onShowCode={() => setIsCodeModalOpen(true)}
