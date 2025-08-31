@@ -1,19 +1,14 @@
 import { useMutation } from "@/hook/common/useMutation";
-import { httpClient } from "@/lib/axios";
-
-interface RegisterVariables {
-  email: string;
-  password: string;
-  nickname: string;
-}
+import { authMutations } from "@/query/auth";
+import { RegisterRq } from "@/rqrs/auth/RegisterRq";
 
 export const useRegisterMutation = (
   onSuccess?: () => void,
   onError?: (error: { errorStatus: number; errorMessage: string }) => void
 ) => {
-  const mutation = useMutation<void, RegisterVariables>(
+  const mutation = useMutation<void, RegisterRq>(
     async ({ email, password, nickname }) => {
-      await httpClient.post("/auth/register", {
+      await authMutations.register().mutationFn({
         email,
         password,
         nickname,

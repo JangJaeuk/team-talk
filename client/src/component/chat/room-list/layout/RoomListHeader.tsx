@@ -22,7 +22,7 @@ export const RoomListHeader = () => {
           <div className="flex items-center gap-2">
             <div className="w-5 sm:w-6 h-5 sm:h-6">
               <Image
-                src={`/avatars/${user.avatar ?? "avatar1"}.svg`}
+                src={`/avatars/${user.avatar}.svg`}
                 alt={"프로필 이미지"}
                 width={24}
                 height={24}

@@ -1,5 +1,7 @@
 import { httpClient } from "@/lib/axios";
-import { Room, RoomFormData } from "@/type/room";
+import { CreateRoomRq } from "@/rqrs/room/createRoomRq";
+import { CreateRoomRs } from "@/rqrs/room/createRoomRs";
+import { Room } from "@/type/room";
 
 export const roomKeys = {
   all: ["rooms"] as const,
@@ -46,8 +48,8 @@ export const roomQueries = {
 
 export const roomMutations = {
   create: () => ({
-    mutationFn: async (data: RoomFormData) => {
-      const response = await httpClient.post<{ id: string }>("/rooms", data);
+    mutationFn: async (data: CreateRoomRq) => {
+      const response = await httpClient.post<CreateRoomRs>("/rooms", data);
       return response.data;
     },
   }),

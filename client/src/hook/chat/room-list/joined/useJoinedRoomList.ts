@@ -1,31 +1,27 @@
 import { roomQueries } from "@/query/room";
-import { useAuthStore } from "@/store/useAuthStore";
-import { Room } from "@/type/room";
-import { useQuery } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 
-export const useJoinedRoomList = () => {
-  const { user } = useAuthStore();
+interface Params {
+  query: string;
+}
 
-  const {
-    data: rooms,
-    isLoading,
-    refetch: fetchRooms,
-  } = useQuery({
+export const useJoinedRoomList = ({ query }: Params) => {
+  const { data: rooms, refetch: fetchRooms } = useSuspenseQuery({
     ...roomQueries.joinedList(),
-    enabled: !!user,
   });
 
-  const filterRoomsByQuery = useCallback((rooms: Room[], query: string) => {
+  const filteredRooms = useMemo(() => {
+    if (query.trim() === "") return rooms;
+
     return rooms.filter((room) =>
       room.name.toLowerCase().includes(query.toLowerCase())
     );
-  }, []);
+  }, [query, rooms]);
 
   return {
     rooms,
-    isLoading,
+    filteredRooms,
     fetchRooms,
-    filterRoomsByQuery,
   };
 };

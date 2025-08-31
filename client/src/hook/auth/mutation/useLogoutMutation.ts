@@ -1,5 +1,5 @@
 import { useMutation } from "@/hook/common/useMutation";
-import { httpClient } from "@/lib/axios";
+import { authMutations } from "@/query/auth";
 import { useAuthStore } from "@/store/useAuthStore";
 
 export const useLogoutMutation = (
@@ -10,7 +10,7 @@ export const useLogoutMutation = (
 
   const mutation = useMutation<void, void>(
     async () => {
-      await httpClient.post("/auth/logout");
+      await authMutations.logout().mutationFn();
     },
     {
       onSuccess: () => {

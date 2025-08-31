@@ -1,48 +1,16 @@
+import { useAvailableRoomList } from "@/hook/chat/room-list/available/useAvailableRoomList";
 import { useDebounce } from "@/hook/common/useDebounce";
-import { roomQueries } from "@/query/room";
-import { useAuthStore } from "@/store/useAuthStore";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { useInView } from "react-intersection-observer";
+import { useState } from "react";
 import { RoomSearchBar } from "../../tool/RoomSearchBar";
 import { AvailableRoomList } from "./AvailableRoomList";
 import { AvailableRoomListEmpty } from "./AvailableRoomListEmpty";
-import { AvailableRoomListSkeleton } from "./AvailableRoomListSkeleton";
-
-const ROOMS_PER_PAGE = 30;
 
 export const AvailableRoomListWrapper = () => {
-  const { user } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
-  const { ref, inView } = useInView();
-
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useInfiniteQuery({
-      ...roomQueries.availableList({
-        search: debouncedSearch,
-        limit: ROOMS_PER_PAGE,
-      }),
-      initialPageParam: undefined,
-      enabled: !!user,
-      getNextPageParam: (lastPage) => {
-        if (!lastPage.hasNextPage) return undefined;
-        const lastRoom = lastPage.rooms[lastPage.rooms.length - 1];
-        return lastRoom?.id;
-      },
-      select: (data) => ({
-        pages: data.pages,
-        pageParams: data.pageParams,
-      }),
-    });
-
-  useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  const allRooms = data?.pages.flatMap((page) => page.rooms) || [];
+  const { rooms, isFetchingNextPage, ref } = useAvailableRoomList({
+    query: debouncedSearch,
+  });
 
   return (
     <div className="h-full flex flex-col">
@@ -54,11 +22,9 @@ export const AvailableRoomListWrapper = () => {
       />
 
       <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar">
-        {isLoading || !data ? (
-          <AvailableRoomListSkeleton />
-        ) : allRooms.length > 0 ? (
+        {rooms.length > 0 ? (
           <>
-            <AvailableRoomList rooms={allRooms} />
+            <AvailableRoomList rooms={rooms} />
             <div ref={ref} className="h-4" />
             {isFetchingNextPage && (
               <div className="flex justify-center py-4">

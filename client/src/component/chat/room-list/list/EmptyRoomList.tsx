@@ -1,20 +1,29 @@
+import { TabType } from "@/type/tab";
+import { useMemo } from "react";
+
 interface Props {
-  type: "joined" | "available";
+  type: TabType;
 }
 
 export const EmptyRoomList = ({ type }: Props) => {
-  const messages = {
-    joined: {
-      title: "참여 중인 채팅방이 없습니다",
-      description: "새로운 채팅방을 만들거나 참여해보세요",
-    },
-    available: {
-      title: "참여 가능한 채팅방이 없습니다",
-      description: "새로운 채팅방을 만들어보세요",
-    },
-  };
+  const messages = useMemo(
+    () => ({
+      joined: {
+        title: "참여 중인 채팅방이 없습니다",
+        description: "새로운 채팅방을 만들거나 참여해보세요",
+      },
+      available: {
+        title: "참여 가능한 채팅방이 없습니다",
+        description: "새로운 채팅방을 만들어보세요",
+      },
+    }),
+    []
+  );
 
-  const { title, description } = messages[type];
+  const { title, description } = useMemo(
+    () => messages[type],
+    [messages, type]
+  );
 
   return (
     <div className="flex flex-col items-center justify-center h-60 bg-white rounded-lg shadow">

@@ -1,18 +1,8 @@
-import { useMutation } from "@/hook/common/useMutation";
-import { httpClient } from "@/lib/axios";
-import { useAuthStore } from "@/store/useAuthStore";
-import { User } from "@/type";
-
-interface TokenResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: User;
-}
-
-interface LoginVariables {
-  email: string;
-  password: string;
-}
+import {useMutation} from "@/hook/common/useMutation";
+import {authMutations} from "@/query/auth";
+import {LoginRq} from "@/rqrs/auth/loginRq";
+import {LoginRs} from "@/rqrs/auth/loginRs";
+import {useAuthStore} from "@/store/useAuthStore";
 
 export const useLoginMutation = (
   onSuccess?: () => void,
@@ -20,13 +10,11 @@ export const useLoginMutation = (
 ) => {
   const { login: loginStore } = useAuthStore();
 
-  const mutation = useMutation<TokenResponse, LoginVariables>(
+  const mutation = useMutation<LoginRs, LoginRq>(
     async ({ email, password }) => {
-      const response = await httpClient.post<TokenResponse>("/auth/login", {
-        email,
-        password,
-      });
-      return response.data;
+      return await authMutations
+          .login()
+          .mutationFn({email, password});
     },
     {
       onSuccess: (result) => {

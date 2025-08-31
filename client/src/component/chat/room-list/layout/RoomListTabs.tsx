@@ -1,13 +1,14 @@
 "use client";
 
+import { TabType } from "@/type/tab";
 import { cn } from "@/util/style";
 
-interface RoomListTabsProps {
-  activeTab: "joined" | "available";
-  onTabChange: (tab: "joined" | "available") => void;
+interface Props {
+  activeTab: TabType;
+  onTabChange: (tab: TabType) => void;
 }
 
-export const RoomListTabs = ({ activeTab, onTabChange }: RoomListTabsProps) => {
+export const RoomListTabs = ({ activeTab, onTabChange }: Props) => {
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
       <div className="container mx-auto flex h-16">

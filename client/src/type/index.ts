@@ -1,9 +1,11 @@
+import { Avatar } from "./avatar";
+
 export interface User {
   id: string;
   email: string;
   nickname: string;
   isOnline: boolean;
-  avatar: string;
+  avatar: Avatar;
 }
 
 export interface ChatRoom {
@@ -14,7 +16,7 @@ export interface ChatRoom {
   createdAt: Date;
   participantCount: number;
   lastMessage?: Message | null;
-  participants: { id: string; avatar: string; nickname: string }[]; // 참여자 정보 목록
+  participants: { id: string; avatar: Avatar; nickname: string }[]; // 참여자 정보 목록
   unreadCount: number; // 읽지 않은 메시지 수
 }
 
@@ -22,7 +24,7 @@ export interface Message {
   id: string;
   content: string;
   roomId: string;
-  sender: User & { avatar: string };
+  sender: User & { avatar: Avatar };
   createdAt: Date;
   isEdited: boolean;
   type?: "normal" | "system" | "system:create";

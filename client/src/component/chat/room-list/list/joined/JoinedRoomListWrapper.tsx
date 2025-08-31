@@ -2,66 +2,51 @@
 
 import { useJoinedRoomList } from "@/hook/chat/room-list/joined/useJoinedRoomList";
 import { useJoinedRoomListSocket } from "@/hook/chat/room-list/joined/useJoinedRoomListSocket";
-import { roomMutations } from "@/query/room";
-import { RoomFormData } from "@/type/room";
-import { useMutation } from "@tanstack/react-query";
+import { useCreateRoomMutation } from "@/hook/chat/room-list/mutation/useCreateRoomMutation";
+import { CreateRoomRq } from "@/rqrs/room/createRoomRq";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { CreateRoomModal } from "../../modal/CreateRoomModal";
 import { RoomSearchBar } from "../../tool/RoomSearchBar";
 import { JoinedRoomList } from "./JoinedRoomList";
 import { JoinedRoomListEmpty } from "./JoinedRoomListEmpty";
-import { JoinedRoomListSkeleton } from "./JoinedRoomListSkeleton";
 
 export const JoinedRoomListWrapper = () => {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const router = useRouter();
 
-  const onJoinRoom = useCallback(
-    (roomId: string) => {
-      router.push(`/rooms/${roomId}`);
-    },
-    [router]
-  );
-
-  const { isLoading, rooms, fetchRooms, filterRoomsByQuery } =
-    useJoinedRoomList();
-
-  const wrappedFetchRooms = async () => {
-    await fetchRooms();
-  };
+  const { filteredRooms, fetchRooms } = useJoinedRoomList({
+    query: searchQuery,
+  });
 
   const { handleEnterRoom } = useJoinedRoomListSocket({
-    onJoinRoom,
-    fetchRooms: wrappedFetchRooms,
+    onJoinRoom: (roomId: string) => {
+      router.push(`/rooms/${roomId}`);
+    },
+    fetchRooms: async () => {
+      await fetchRooms();
+    },
   });
+
+  const { createRoom } = useCreateRoomMutation(
+    (id: string) => {
+      setShowCreateModal(false);
+      router.push(`/rooms/${id}`);
+    },
+    (error) => {
+      console.error("Failed to create room:", error);
+      alert("방 생성에 실패했습니다.");
+    }
+  );
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
   };
 
-  const { mutateAsync: createRoom } = useMutation({
-    ...roomMutations.create(),
-    onSuccess: (data) => {
-      setShowCreateModal(false);
-      router.push(`/rooms/${data.id}`);
-    },
-  });
-
-  const handleCreateRoom = async (data: RoomFormData) => {
-    try {
-      await createRoom(data);
-    } catch (error) {
-      console.error("Failed to create room:", error);
-    }
+  const handleCreateRoom = async (data: CreateRoomRq) => {
+    createRoom(data);
   };
-
-  const filteredJoinedRooms = rooms
-    ? filterRoomsByQuery(rooms, searchQuery)
-    : [];
-
-  console.log("확인", rooms, isLoading);
 
   return (
     <div className="h-full flex flex-col">
@@ -74,13 +59,8 @@ export const JoinedRoomListWrapper = () => {
       />
 
       <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar">
-        {isLoading || !rooms ? (
-          <JoinedRoomListSkeleton />
-        ) : filteredJoinedRooms.length > 0 ? (
-          <JoinedRoomList
-            rooms={filteredJoinedRooms}
-            onEnterRoom={handleEnterRoom}
-          />
+        {filteredRooms.length > 0 ? (
+          <JoinedRoomList rooms={filteredRooms} onEnterRoom={handleEnterRoom} />
         ) : (
           <JoinedRoomListEmpty />
         )}
