@@ -10,9 +10,10 @@ interface Props {
 export const CreateRoomModal = ({ isOpen, onClose, onSubmit }: Props) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [code, setCode] = useState("");
   const isFormValid = useMemo(
-    () => name.trim() !== "" && description.trim() !== "",
-    [name, description]
+    () => name.trim() !== "" && description.trim() !== "" && code.trim() !== "",
+    [name, description, code]
   );
 
   const handleSubmit = () => {
@@ -21,10 +22,12 @@ export const CreateRoomModal = ({ isOpen, onClose, onSubmit }: Props) => {
     onSubmit({
       name: name.trim(),
       description: description.trim(),
+      code: code.trim(),
     });
 
     setName("");
     setDescription("");
+    setCode("");
   };
 
   if (!isOpen) return null;
@@ -45,6 +48,13 @@ export const CreateRoomModal = ({ isOpen, onClose, onSubmit }: Props) => {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="방 설명 *"
+          className="w-full p-2 border rounded mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+        <input
+          type="text"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          placeholder="방 코드 *"
           className="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         <div className="flex justify-end space-x-2">

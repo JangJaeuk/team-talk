@@ -11,8 +11,8 @@ export const useJoinRoomMutation = (
   const queryClient = useQueryClient();
 
   const mutation = useMutation<RoomRs, JoinRoomRq>(
-    async ({ id }) => {
-      return await roomMutations.join().mutationFn(id);
+    async ({ id, code }) => {
+      return await roomMutations.join().mutationFn({ id, code });
     },
     {
       onSuccess: (result) => {

@@ -37,6 +37,18 @@ export const createRoomsRouter = (
     }
   });
 
+  // 방 코드 조회
+  router.get("/:roomId/code", authMiddleware, async (req, res) => {
+    try {
+      const { roomId } = req.params;
+      const code = await roomService.getRoomCode(roomId, req.user!.uid);
+      res.json({ code });
+    } catch (error) {
+      console.error("Error fetching room code:", error);
+      res.status(500).json({ error: "Failed to fetch room code" });
+    }
+  });
+
   // 단일 채팅방 조회
   router.get("/:roomId", authMiddleware, async (req, res) => {
     try {
@@ -57,10 +69,14 @@ export const createRoomsRouter = (
   // 채팅방 생성
   router.post("/", authMiddleware, async (req, res) => {
     try {
-      const { name, description } = req.body;
+      const { name, description, code } = req.body;
+      if (!name || !description || !code) {
+        return res.status(400).json({ error: "필수 입력값이 누락되었습니다." });
+      }
       const roomId = await roomService.createRoom({
         name,
         description,
+        code,
         createdBy: req.user!.uid,
         participants: [req.user!.uid],
       });
@@ -107,7 +123,8 @@ export const createRoomsRouter = (
   router.post("/:roomId/join", authMiddleware, async (req, res) => {
     try {
       const { roomId } = req.params;
-      const room = await roomService.joinRoom(roomId, req.user!.uid);
+      const { code } = req.body;
+      const room = await roomService.joinRoom(roomId, req.user!.uid, code);
 
       const systemMessageData = {
         roomId,
@@ -145,7 +162,13 @@ export const createRoomsRouter = (
       res.json(room);
     } catch (error) {
       console.error("Error joining room:", error);
-      res.status(500).json({ error: "Failed to join room" });
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to join room";
+      if (errorMessage === "Invalid room code") {
+        res.status(400).json({ error: "잘못된 방 코드입니다." });
+      } else {
+        res.status(500).json({ error: "Failed to join room" });
+      }
     }
   });
 

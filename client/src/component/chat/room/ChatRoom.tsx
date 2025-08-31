@@ -8,12 +8,14 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { formatDate, isSameDay } from "@/util/date";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ChatRoomContentForJoin } from "./ChatRoomContentForJoin";
 import { ChatRoomSkeleton } from "./ChatRoomSkeleton";
 import { MessageForm } from "./form/MessageForm";
 import { ChatRoomHeader } from "./layout/ChatRoomHeader";
 import { ChatRoomSidePanel } from "./layout/ChatRoomSidePanel";
 import { SystemMessage } from "./message/SystemMessage";
 import { UserMessage } from "./message/UserMessage";
+import { RoomCodeModal } from "./modal/RoomCodeModal";
 
 interface Props {
   roomId: string;
@@ -26,9 +28,10 @@ export const ChatRoom = ({ roomId }: Props) => {
     null
   );
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
+  const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
 
   // 채팅방 관련 로직
-  const { room, isJoined, handleJoinRoom, handleLeaveRoom, setRoom } = useRoom({
+  const { room, isJoined, handleLeaveRoom, setRoom } = useRoom({
     roomId,
   });
 
@@ -36,13 +39,13 @@ export const ChatRoom = ({ roomId }: Props) => {
   const {
     messages,
     hasMore,
+    chatContainerRef,
+    messageEndRef,
+    isLoading: isMessagesLoading,
     loadMoreRef,
     handleNewMessage,
     formatTimestamp,
     setMessages,
-    chatContainerRef,
-    messageEndRef,
-    isLoading: isMessagesLoading,
   } = useMessages({
     roomId,
     isJoined: isJoined || false,
@@ -85,7 +88,6 @@ export const ChatRoom = ({ roomId }: Props) => {
       <ChatRoomHeader
         room={room}
         isJoined={isJoined || false}
-        onJoinRoom={handleJoinRoom}
         onToggleSidePanel={() => setIsSidePanelOpen(true)}
       />
       {isJoined && (
@@ -94,6 +96,7 @@ export const ChatRoom = ({ roomId }: Props) => {
           isOpen={isSidePanelOpen}
           onClose={() => setIsSidePanelOpen(false)}
           onLeaveRoom={handleLeaveRoom}
+          onShowCode={() => setIsCodeModalOpen(true)}
         />
       )}
 
@@ -178,20 +181,13 @@ export const ChatRoom = ({ roomId }: Props) => {
           />
         </>
       ) : (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-gray-600 mb-4">
-              이 채팅방에 참여하려면 먼저 가입해주세요.
-            </p>
-            <button
-              onClick={handleJoinRoom}
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-            >
-              방 가입하기
-            </button>
-          </div>
-        </div>
+        <ChatRoomContentForJoin roomId={roomId} />
       )}
+      <RoomCodeModal
+        isOpen={isCodeModalOpen}
+        onClose={() => setIsCodeModalOpen(false)}
+        roomId={roomId}
+      />
     </div>
   );
 };

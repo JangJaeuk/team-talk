@@ -35,10 +35,8 @@ export interface ClientToServerEvents {
   "message:update": (messageId: string, content: string) => void;
   "message:delete": (messageId: string) => void;
   "message:read": (messageId: string) => void;
-  "room:create": (room: { name: string; description?: string }) => void;
   "room:enter": (roomId: string) => void; // 변경: join -> enter
   "room:exit": (roomId: string) => void; // 변경: leave -> exit
-  "room:join": (roomId: string) => void; // 추가: 방 가입
   "room:leave": (roomId: string) => void; // 추가: 방 탈퇴
   "room:search": (query: string) => void;
   "typing:start": (roomId: string) => void;

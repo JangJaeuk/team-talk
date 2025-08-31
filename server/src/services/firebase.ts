@@ -1,5 +1,5 @@
-import { db } from "../config/firebase";
-import { ChatRoom, Message, User } from "../types";
+import {db} from "../config/firebase";
+import {ChatRoom, Message, User} from "../types";
 
 // Firestore 타임스탬프를 Date로 변환
 const convertToDate = (timestamp: {
@@ -17,6 +17,7 @@ export const roomService = {
   async createRoom(room: {
     name: string;
     description?: string;
+    code: string;
     createdBy: string;
     participants: string[];
   }): Promise<string> {
@@ -57,9 +58,10 @@ export const roomService = {
             })
           );
 
+          const { code: _, ...roomData } = data;
           return {
             id: doc.id,
-            ...data,
+            ...roomData,
             participants,
             createdAt: convertToDate(data.createdAt),
           } as ChatRoom;
@@ -192,9 +194,10 @@ export const roomService = {
             })
           );
 
+          const { code: _, ...roomData } = data;
           return {
             id: doc.id,
-            ...data,
+            ...roomData,
             participants,
             createdAt: convertToDate(data.createdAt),
           } as ChatRoom;
@@ -274,8 +277,9 @@ export const roomService = {
       })
     );
 
+    const { code: _, ...roomData } = data;
     return {
-      ...data,
+      ...roomData,
       id: doc.id,
       participants,
     } as ChatRoom;
@@ -287,7 +291,11 @@ export const roomService = {
   },
 
   // 채팅방 참여
-  async joinRoom(roomId: string, userId: string): Promise<ChatRoom> {
+  async joinRoom(
+    roomId: string,
+    userId: string,
+    code: string
+  ): Promise<ChatRoom> {
     const roomRef = db.collection("rooms").doc(roomId);
 
     await db.runTransaction(async (transaction) => {
@@ -305,6 +313,10 @@ export const roomService = {
         throw new Error("User already joined this room");
       }
 
+      if (data.code !== code) {
+        throw new Error("Invalid room code");
+      }
+
       transaction.update(roomRef, {
         participants: [...data.participants, userId],
       });
@@ -319,6 +331,26 @@ export const roomService = {
   },
 
   // 채팅방 나가기
+  async getRoomCode(roomId: string, userId: string): Promise<string> {
+    const roomRef = db.collection("rooms").doc(roomId);
+    const room = await roomRef.get();
+
+    if (!room.exists) {
+      throw new Error("Room not found");
+    }
+
+    const data = room.data();
+    if (!data) {
+      throw new Error("Room data not found");
+    }
+
+    if (!data.participants.includes(userId)) {
+      throw new Error("Not a room participant");
+    }
+
+    return data.code;
+  },
+
   async leaveRoom(roomId: string, userId: string): Promise<ChatRoom> {
     const roomRef = db.collection("rooms").doc(roomId);
 
@@ -434,32 +466,30 @@ export const messageService = {
       .orderBy("createdAt", "asc")
       .get();
 
-    const messages = await Promise.all(
-      snapshot.docs.map(async (doc) => {
-        const data = doc.data();
-        const senderDoc = await db
-          .collection("users")
-          .doc(data.sender.id)
-          .get();
-        const senderData = senderDoc.data();
+    return await Promise.all(
+        snapshot.docs.map(async (doc) => {
+          const data = doc.data();
+          const senderDoc = await db
+              .collection("users")
+              .doc(data.sender.id)
+              .get();
+          const senderData = senderDoc.data();
 
-        return {
-          id: doc.id,
-          ...data,
-          sender: {
-            ...data.sender,
-            avatar: senderData?.avatar || "avatar1",
-          },
-          createdAt: convertToDate(data.createdAt),
-          readBy: (data.readBy || []).map((read: any) => ({
-            ...read,
-            readAt: convertToDate(read.readAt),
-          })),
-        } as Message;
-      })
+          return {
+            id: doc.id,
+            ...data,
+            sender: {
+              ...data.sender,
+              avatar: senderData?.avatar || "avatar1",
+            },
+            createdAt: convertToDate(data.createdAt),
+            readBy: (data.readBy || []).map((read: any) => ({
+              ...read,
+              readAt: convertToDate(read.readAt),
+            })),
+          } as Message;
+        })
     );
-
-    return messages;
   },
 
   async getMessages(

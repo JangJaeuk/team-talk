@@ -1,9 +1,10 @@
+import { JoinRoomModal } from "@/component/chat/room/modal/JoinRoomModal";
 import { AvatarGroup } from "@/component/common/AvatarGroup";
 import { useJoinRoomMutation } from "@/hook/mutation/room/useJoinRoomMutation";
 import { RoomRs } from "@/rqrs/room/roomRs";
 import { formatTimeAgo } from "@/util/date";
 import { useRouter } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 interface Props {
   rooms: RoomRs[];
@@ -12,17 +13,6 @@ interface Props {
 export const AvailableRoomList = ({ rooms }: Props) => {
   const router = useRouter();
 
-  const { joinRoom, isPending } = useJoinRoomMutation(
-    (id: string) => {
-      alert("채팅방에 참여했습니다.");
-      router.push(`/rooms/${id}`);
-    },
-    (error) => {
-      console.error("Failed to join room:", error);
-      alert("채팅방 참여에 실패했습니다.");
-    }
-  );
-
   const getAvatarUsers = useCallback((room: RoomRs) => {
     return room.participants.slice(0, 4).map((participant) => ({
       id: participant.id,
@@ -30,8 +20,36 @@ export const AvailableRoomList = ({ rooms }: Props) => {
     }));
   }, []);
 
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+
+  const { joinRoom, isPending } = useJoinRoomMutation(
+    (id: string) => {
+      setIsJoinModalOpen(false);
+      setSelectedRoomId(null);
+
+      alert("채팅방에 참여했습니다.");
+      router.push(`/rooms/${id}`);
+    },
+    (error) => {
+      console.error("Failed to join room:", error);
+      if (error.errorMessage === "Invalid room code") {
+        alert("잘못된 방 코드입니다.");
+      } else {
+        alert("채팅방 참여에 실패했습니다.");
+      }
+    }
+  );
+
   const handleJoinRoom = (roomId: string) => {
-    joinRoom({ id: roomId });
+    setSelectedRoomId(roomId);
+    setIsJoinModalOpen(true);
+  };
+
+  const handleJoinSubmit = (code: string) => {
+    if (selectedRoomId) {
+      joinRoom({ id: selectedRoomId, code });
+    }
   };
 
   return (
@@ -80,6 +98,15 @@ export const AvailableRoomList = ({ rooms }: Props) => {
           </div>
         </div>
       ))}
+      <JoinRoomModal
+        isOpen={isJoinModalOpen}
+        isPending={isPending}
+        onClose={() => {
+          setIsJoinModalOpen(false);
+          setSelectedRoomId(null);
+        }}
+        onSubmit={handleJoinSubmit}
+      />
     </div>
   );
 };

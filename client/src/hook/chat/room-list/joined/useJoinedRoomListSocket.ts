@@ -44,12 +44,9 @@ export const useJoinedRoomListSocket = ({
     [queryClient]
   );
 
-  const handleNewMessage = useCallback(
-    () => {
-      queryClient.invalidateQueries({ queryKey: roomKeys.joinedLists() });
-    },
-    [queryClient]
-  );
+  const handleNewMessage = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: roomKeys.joinedLists() });
+  }, [queryClient]);
 
   const handleRoomJoinSuccess = useCallback(
     (room: RoomRs) => {
@@ -87,10 +84,6 @@ export const useJoinedRoomListSocket = ({
     }
   }, [socketId, handleRoomJoinSuccess, handleRoomLeaveSuccess]);
 
-  const handleJoinRoom = useCallback((roomId: string) => {
-    socketClient.emitSocket("room:join", roomId);
-  }, []);
-
   const handleLeaveRoom = useCallback((roomId: string) => {
     socketClient.emitSocket("room:leave", roomId);
   }, []);
@@ -105,7 +98,6 @@ export const useJoinedRoomListSocket = ({
   );
 
   return {
-    handleJoinRoom,
     handleLeaveRoom,
     handleEnterRoom,
   };

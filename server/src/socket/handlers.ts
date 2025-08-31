@@ -1,6 +1,6 @@
 import { Server, Socket } from "socket.io";
 import { createEventAuthMiddleware } from "../middleware/socket";
-import { messageService, roomService, userService } from "../services/firebase";
+import { messageService, roomService } from "../services/firebase";
 import { ClientToServerEvents, ServerToClientEvents } from "../types";
 
 export const setupSocketHandlers = (
@@ -14,9 +14,6 @@ export const setupSocketHandlers = (
   socket.use(
     createEventAuthMiddleware(socket, ["typing:start", "typing:stop"])
   );
-
-  // 사용자 온라인 상태 업데이트
-  userService.updateUserStatus(socket.data.user.uid, true);
 
   // 방 입장
   socket.on("room:enter", async (roomId) => {
@@ -84,57 +81,6 @@ export const setupSocketHandlers = (
   socket.on("room:exit", async (roomId) => {
     await handleExitRoom(roomId);
     currentRoomId = null;
-  });
-
-  // 방 가입 이벤트
-  socket.on("room:join", async (roomId) => {
-    if (!socket.data.user) {
-      console.error("Unauthorized user tried to join room");
-      return;
-    }
-
-    try {
-      const room = await roomService.joinRoom(roomId, socket.data.user.uid);
-
-      // 가입 성공 이벤트 전송
-      socket.emit("room:join:success", room);
-
-      // 시스템 메시지 생성 및 저장
-      const systemMessageData = {
-        content: `${socket.data.user.nickname}님이 채팅방에 참여하셨습니다.`,
-        sender: {
-          id: socket.data.user.uid,
-          email: socket.data.user.email!,
-          nickname: socket.data.user.nickname,
-          isOnline: true,
-          avatar: socket.data.user.avatar || "avatar1",
-        },
-        roomId,
-        type: "system:join" as const,
-      };
-
-      const systemMessageId = await messageService.createMessage(
-        systemMessageData
-      );
-      const systemMessage = {
-        id: systemMessageId,
-        ...systemMessageData,
-        createdAt: new Date(),
-        isEdited: false,
-        readBy: [],
-      };
-
-      io.to(roomId).emit("message:new", systemMessage);
-
-      // 참여자 목록 업데이트 브로드캐스트
-      io.to(roomId).emit("room:participant:update", roomId, room.participants);
-
-      // 업데이트된 방 목록 브로드캐스트
-      const rooms = await roomService.getJoinedRooms();
-      io.emit("room:list", rooms);
-    } catch (error) {
-      console.error("Error handling room join:", error);
-    }
   });
 
   // 방 탈퇴 이벤트
@@ -318,7 +264,5 @@ export const setupSocketHandlers = (
     if (currentRoomId) {
       await handleExitRoom(currentRoomId);
     }
-    // 사용자 오프라인 상태 업데이트
-    await userService.updateUserStatus(socket.data.user.uid, false);
   });
 };

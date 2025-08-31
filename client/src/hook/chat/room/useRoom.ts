@@ -25,11 +25,6 @@ export const useRoom = ({ roomId }: UseRoomProps) => {
     return room.participants.some((participant) => participant.id === user.id);
   }, [user?.id, room]);
 
-  const handleJoinRoom = () => {
-    if (!user) return;
-    socketClient.emitSocket("room:join", roomId);
-  };
-
   const handleLeaveRoom = () => {
     if (!user) return;
     if (window.confirm("정말 채팅방을 탈퇴하시겠습니까?")) {
@@ -50,7 +45,6 @@ export const useRoom = ({ roomId }: UseRoomProps) => {
   return {
     room,
     isJoined,
-    handleJoinRoom,
     handleLeaveRoom,
     setRoom,
   };

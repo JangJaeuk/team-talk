@@ -4,14 +4,12 @@ import { useRouter } from "next/navigation";
 interface Props {
   room: RoomRs | null;
   isJoined: boolean;
-  onJoinRoom: () => void;
   onToggleSidePanel: () => void;
 }
 
 export const ChatRoomHeader = ({
   room,
   isJoined,
-  onJoinRoom,
   onToggleSidePanel,
 }: Props) => {
   const router = useRouter();
@@ -50,8 +48,8 @@ export const ChatRoomHeader = ({
             )}
           </div>
         </div>
-        <div className="flex items-center">
-          {isJoined ? (
+        {isJoined && (
+          <div className="flex items-center">
             <button
               onClick={onToggleSidePanel}
               className="text-gray-600 hover:text-gray-800 p-1.5"
@@ -71,15 +69,8 @@ export const ChatRoomHeader = ({
                 />
               </svg>
             </button>
-          ) : (
-            <button
-              onClick={onJoinRoom}
-              className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs sm:text-sm text-blue-500 hover:text-blue-600 border border-blue-500 rounded transition-colors whitespace-nowrap"
-            >
-              방 가입
-            </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

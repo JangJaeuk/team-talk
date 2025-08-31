@@ -8,6 +8,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onLeaveRoom: () => void;
+  onShowCode: () => void;
 }
 
 export const ChatRoomSidePanel = ({
@@ -15,6 +16,7 @@ export const ChatRoomSidePanel = ({
   isOpen,
   onClose,
   onLeaveRoom,
+  onShowCode,
 }: Props) => {
   const { user } = useAuthStore();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -124,12 +126,20 @@ export const ChatRoomSidePanel = ({
             </div>
           </div>
 
-          <button
-            onClick={onLeaveRoom}
-            className="w-full px-4 py-2 sm:py-3 text-sm sm:text-base text-red-500 hover:text-red-600 border border-red-500 rounded transition-colors"
-          >
-            방 탈퇴
-          </button>
+          <div className="space-y-2">
+            <button
+              onClick={onShowCode}
+              className="w-full px-4 py-2 sm:py-3 text-sm sm:text-base text-blue-500 hover:text-blue-600 border border-blue-500 rounded transition-colors"
+            >
+              방 코드 보기
+            </button>
+            <button
+              onClick={onLeaveRoom}
+              className="w-full px-4 py-2 sm:py-3 text-sm sm:text-base text-red-500 hover:text-red-600 border border-red-500 rounded transition-colors"
+            >
+              방 탈퇴
+            </button>
+          </div>
         </div>
       </div>
     </div>

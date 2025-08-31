@@ -44,6 +44,15 @@ export const roomQueries = {
       return response.data;
     },
   }),
+  code: (roomId: string) => ({
+    queryKey: [...roomKeys.all, "code", roomId],
+    queryFn: async () => {
+      const response = await httpClient.get<{ code: string }>(
+        `/rooms/${roomId}/code`
+      );
+      return response.data;
+    },
+  }),
 };
 
 export const roomMutations = {
@@ -54,8 +63,10 @@ export const roomMutations = {
     },
   }),
   join: () => ({
-    mutationFn: async (roomId: string) => {
-      const response = await httpClient.post<RoomRs>(`/rooms/${roomId}/join`);
+    mutationFn: async ({ id, code }: { id: string; code: string }) => {
+      const response = await httpClient.post<RoomRs>(`/rooms/${id}/join`, {
+        code,
+      });
       return response.data;
     },
   }),
