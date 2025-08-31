@@ -1,12 +1,12 @@
 import { AvatarGroup } from "@/component/common/AvatarGroup";
 import { useJoinRoomMutation } from "@/hook/chat/room-list/mutation/useJoinRoomMutation";
-import { Room } from "@/type/room";
+import { RoomRs } from "@/rqrs/room/roomRs";
 import { formatTimeAgo } from "@/util/date";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 
 interface Props {
-  rooms: Room[];
+  rooms: RoomRs[];
 }
 
 export const AvailableRoomList = ({ rooms }: Props) => {
@@ -23,7 +23,7 @@ export const AvailableRoomList = ({ rooms }: Props) => {
     }
   );
 
-  const getAvatarUsers = useCallback((room: Room) => {
+  const getAvatarUsers = useCallback((room: RoomRs) => {
     return room.participants.slice(0, 4).map((participant) => ({
       id: participant.id,
       avatar: participant.avatar,

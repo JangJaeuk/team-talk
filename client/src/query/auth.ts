@@ -2,7 +2,7 @@ import { httpClient } from "@/lib/axios";
 import { LoginRq } from "@/rqrs/auth/loginRq";
 import { LoginRs } from "@/rqrs/auth/loginRs";
 import { RegisterRq } from "@/rqrs/auth/RegisterRq";
-import type { User } from "@/type";
+import type { UserRs } from "@/rqrs/auth/userRs";
 
 export const authKeys = {
   me: () => ["me"] as const,
@@ -12,7 +12,7 @@ export const authQueries = {
   me: () => ({
     queryKey: authKeys.me(),
     queryFn: async () => {
-      const response = await httpClient.get<User>("/auth/me");
+      const response = await httpClient.get<UserRs>("/auth/me");
 
       return response.data;
     },

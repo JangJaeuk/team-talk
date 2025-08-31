@@ -1,7 +1,7 @@
-import { User } from "@/type";
+import { UserRs } from "@/rqrs/auth/userRs";
 
 export interface LoginRs {
   accessToken: string;
   refreshToken: string;
-  user: User;
+  user: UserRs;
 }

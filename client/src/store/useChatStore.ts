@@ -1,24 +1,25 @@
 import { socketClient } from "@/lib/socket";
-import { ChatRoom, Message } from "@/type";
+import { MessageRs } from "@/rqrs/message/messageRs";
+import { RoomRs } from "@/rqrs/room/roomRs";
 import { create } from "zustand";
 
 interface ChatState {
-  messages: Message[];
-  currentRoom?: ChatRoom;
+  messages: MessageRs[];
+  currentRoom?: RoomRs;
   typingUsers: { [userId: string]: boolean };
   isLoading: boolean;
   error: string | null;
-  rooms: ChatRoom[];
+  rooms: RoomRs[];
 
   // 액션
-  setCurrentRoom: (room: ChatRoom) => void;
-  addMessage: (message: Message) => void;
+  setCurrentRoom: (room: RoomRs) => void;
+  addMessage: (message: MessageRs) => void;
   updateMessage: (messageId: string, content: string) => void;
   deleteMessage: (messageId: string) => void;
   setTypingStatus: (userId: string, isTyping: boolean) => void;
   clearMessages: () => void;
   setError: (error: string | null) => void;
-  setRooms: (rooms: ChatRoom[]) => void;
+  setRooms: (rooms: RoomRs[]) => void;
   updateRoomOrder: (roomId: string) => void;
   markRoomAsRead: (roomId: string) => void;
 }

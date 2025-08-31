@@ -6,13 +6,11 @@ import { useRoomSocket } from "@/hook/chat/room/useRoomSocket";
 import { useTyping } from "@/hook/chat/room/useTyping";
 import { useAuthStore } from "@/store/useAuthStore";
 import { formatDate, isSameDay } from "@/util/date";
-
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ChatRoomSkeleton } from "./ChatRoomSkeleton";
 import { MessageForm } from "./form/MessageForm";
 import { ChatRoomHeader } from "./layout/ChatRoomHeader";
-import { MessageSettingsMenu } from "./message/MessageSettingsMenu";
 import { SystemMessage } from "./message/SystemMessage";
 import { UserMessage } from "./message/UserMessage";
 
@@ -133,14 +131,11 @@ export const ChatRoom = ({ roomId }: Props) => {
                   ) : (
                     <UserMessage
                       message={msg}
-                      userId={user?.id}
-                      formatTimestamp={formatTimestamp}
-                      activeMenuMessageId={activeMenuMessageId}
-                      MessageSettingsMenu={MessageSettingsMenu}
-                      participants={room?.participants || []}
-                      messages={messages}
-                      setActiveMenuMessageId={setActiveMenuMessageId}
                       prevMessage={messages[index + 1]}
+                      activeMenuMessageId={activeMenuMessageId}
+                      participants={room?.participants || []}
+                      formatTimestamp={formatTimestamp}
+                      setActiveMenuMessageId={setActiveMenuMessageId}
                     />
                   )}
                 </div>

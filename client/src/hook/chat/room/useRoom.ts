@@ -1,7 +1,7 @@
 import { socketClient } from "@/lib/socket";
 import { roomKeys, roomQueries } from "@/query/room";
+import type { RoomRs } from "@/rqrs/room/roomRs";
 import { useAuthStore } from "@/store/useAuthStore";
-import type { ChatRoom } from "@/type";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
@@ -41,7 +41,7 @@ export const useRoom = ({ roomId }: UseRoomProps) => {
   };
 
   const setRoom = useCallback(
-    (updatedRoom: ChatRoom) => {
+    (updatedRoom: RoomRs) => {
       queryClient.setQueryData(roomKeys.detail(roomId), updatedRoom);
     },
     [queryClient, roomId]

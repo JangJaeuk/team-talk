@@ -1,7 +1,7 @@
 import { socketClient } from "@/lib/socket";
 import { messageKeys, messageQueries } from "@/query/message";
+import type { MessageRs } from "@/rqrs/message/messageRs";
 import { useAuthStore } from "@/store/useAuthStore";
-import type { Message } from "@/type";
 import { formatTime } from "@/util/date";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
@@ -10,7 +10,7 @@ import { useInView } from "react-intersection-observer";
 interface UseMessagesProps {
   roomId: string;
   isJoined: boolean;
-  onNewMessage?: (message: Message) => void;
+  onNewMessage?: (message: MessageRs) => void;
 }
 
 export const useMessages = ({
@@ -63,13 +63,13 @@ export const useMessages = ({
   }, []);
 
   const handleNewMessage = useCallback(
-    (message: Message) => {
+    (message: MessageRs) => {
       queryClient.setQueryData(
         messageKeys.list(roomId),
         (
           oldData:
             | {
-                pages: { messages: Message[]; hasNextPage: boolean }[];
+                pages: { messages: MessageRs[]; hasNextPage: boolean }[];
                 pageParams: unknown[];
               }
             | undefined
@@ -120,7 +120,7 @@ export const useMessages = ({
     ]
   );
 
-  const formatTimestamp = (timestamp: Message["createdAt"]) => {
+  const formatTimestamp = (timestamp: MessageRs["createdAt"]) => {
     return formatTime(new Date(timestamp));
   };
 
@@ -145,14 +145,16 @@ export const useMessages = ({
   return {
     messages,
     isLoading,
-    hasMore: !!hasNextPage,
+    hasMore: hasNextPage,
     chatContainerRef,
     messageEndRef,
     loadMoreRef,
     handleNewMessage,
     formatTimestamp,
     isScrolledToBottom,
-    setMessages: (updater: Message[] | ((prev: Message[]) => Message[])) => {
+    setMessages: (
+      updater: MessageRs[] | ((prev: MessageRs[]) => MessageRs[])
+    ) => {
       const newMessages =
         typeof updater === "function" ? updater(messages) : updater;
       queryClient.setQueryData(messageKeys.list(roomId), {

@@ -1,7 +1,7 @@
 import { socketClient } from "@/lib/socket";
 import { roomKeys } from "@/query/room";
+import { RoomRs } from "@/rqrs/room/roomRs";
 import { useChatStore } from "@/store/useChatStore";
-import { Room } from "@/type/room";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 
@@ -14,7 +14,7 @@ export const useJoinedRoomListSocket = ({
   onJoinRoom,
   fetchRooms,
 }: UseRoomSocketProps) => {
-  const { updateRoomOrder, markRoomAsRead } = useChatStore();
+  const { markRoomAsRead } = useChatStore();
   const [socketId, setSocketId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
@@ -37,7 +37,7 @@ export const useJoinedRoomListSocket = ({
 
   // 이벤트 핸들러들을 useCallback으로 메모이제이션
   const handleRoomList = useCallback(
-    (updatedRooms: Room[]) => {
+    (updatedRooms: RoomRs[]) => {
       console.log("Received updated room list:", updatedRooms);
       queryClient.setQueryData(roomKeys.joinedLists(), updatedRooms);
     },
@@ -45,14 +45,14 @@ export const useJoinedRoomListSocket = ({
   );
 
   const handleNewMessage = useCallback(
-    (message: { roomId: string }) => {
+    () => {
       queryClient.invalidateQueries({ queryKey: roomKeys.joinedLists() });
     },
     [queryClient]
   );
 
   const handleRoomJoinSuccess = useCallback(
-    (room: Room) => {
+    (room: RoomRs) => {
       console.log("Successfully joined room:", room);
       onJoinRoom(room.id);
     },

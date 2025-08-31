@@ -1,7 +1,7 @@
-import type { Message } from "@/type";
+import type { MessageRs } from "@/rqrs/message/messageRs";
 
 interface Props {
-  message: Message;
+  message: MessageRs;
 }
 
 export const SystemMessage = ({ message }: Props) => {

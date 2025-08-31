@@ -1,8 +1,8 @@
-import type { ChatRoom } from "@/type";
+import type { RoomRs } from "@/rqrs/room/roomRs";
 import { useRouter } from "next/navigation";
 
 interface Props {
-  room: ChatRoom | null;
+  room: RoomRs | null;
   isJoined: boolean;
   onJoinRoom: () => void;
   onLeaveRoom: () => void;

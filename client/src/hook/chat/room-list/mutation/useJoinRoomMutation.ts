@@ -1,8 +1,8 @@
-import {useMutation} from "@/hook/common/useMutation";
-import {roomKeys, roomMutations} from "@/query/room";
-import {JoinRoomRq} from "@/rqrs/room/joinRoomRq";
-import {Room} from "@/type/room";
-import {useQueryClient} from "@tanstack/react-query";
+import { useMutation } from "@/hook/common/useMutation";
+import { roomKeys, roomMutations } from "@/query/room";
+import { JoinRoomRq } from "@/rqrs/room/joinRoomRq";
+import { RoomRs } from "@/rqrs/room/roomRs";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const useJoinRoomMutation = (
   onSuccess?: (id: string) => void,
@@ -10,7 +10,7 @@ export const useJoinRoomMutation = (
 ) => {
   const queryClient = useQueryClient();
 
-  const mutation = useMutation<Room, JoinRoomRq>(
+  const mutation = useMutation<RoomRs, JoinRoomRq>(
     async ({ id }) => {
       return await roomMutations.join().mutationFn(id);
     },

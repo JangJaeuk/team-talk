@@ -1,17 +1,17 @@
 import { AvatarGroup } from "@/component/common/AvatarGroup";
+import { RoomRs } from "@/rqrs/room/roomRs";
 import { useAuthStore } from "@/store/useAuthStore";
-import { Room } from "@/type/room";
 import { formatLastMessageDate } from "@/util/date";
 import { useCallback } from "react";
 
 interface Props {
-  rooms: Room[];
+  rooms: RoomRs[];
   onEnterRoom: (roomId: string) => void;
 }
 
 export const JoinedRoomList = ({ rooms, onEnterRoom }: Props) => {
   const { user } = useAuthStore();
-  const getAvatarUsers = useCallback((room: Room) => {
+  const getAvatarUsers = useCallback((room: RoomRs) => {
     return room.participants.slice(0, 4).map((participant) => ({
       id: participant.id,
       avatar: participant.avatar,

@@ -1,17 +1,17 @@
 import { socketClient } from "@/lib/socket";
-import { User } from "@/type";
+import { UserRs } from "@/rqrs/auth/userRs";
 import { removeAccessToken, setAccessToken } from "@/util/token";
 import { create } from "zustand";
 
 interface AuthState {
-  user: User | null;
+  user: UserRs | null;
   accessToken: string | null;
   isAuthReady: boolean;
 
   // 초기화
-  initialize: (user: User, accessToken: string) => void;
+  initialize: (user: UserRs, accessToken: string) => void;
   // 로그인
-  login: (user: User, accessToken: string) => void;
+  login: (user: UserRs, accessToken: string) => void;
   // 로그아웃
   logout: () => void;
 }
@@ -21,7 +21,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   accessToken: null,
   isAuthReady: false,
 
-  initialize: (user: User, accessToken: string) => {
+  initialize: (user: UserRs, accessToken: string) => {
     set({
       user,
       accessToken,
@@ -32,7 +32,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isAuthReady: true });
   },
 
-  login: (user: User, accessToken: string) => {
+  login: (user: UserRs, accessToken: string) => {
     setAccessToken(accessToken);
 
     // 상태 업데이트

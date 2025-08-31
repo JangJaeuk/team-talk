@@ -1,4 +1,4 @@
-import { ClientToServerEvents, ServerToClientEvents } from "@/type";
+import { ClientToServerEvents, ServerToClientEvents } from "@/type/socketEvent";
 import { getAccessToken, setAccessToken } from "@/util/token";
 import { EventEmitter } from "events";
 import { io, Socket } from "socket.io-client";

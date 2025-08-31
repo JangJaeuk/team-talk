@@ -1,7 +1,7 @@
 import { httpClient } from "@/lib/axios";
 import { CreateRoomRq } from "@/rqrs/room/createRoomRq";
 import { CreateRoomRs } from "@/rqrs/room/createRoomRs";
-import { Room } from "@/type/room";
+import { RoomRs } from "@/rqrs/room/roomRs";
 
 export const roomKeys = {
   all: ["rooms"] as const,
@@ -24,7 +24,7 @@ export const roomQueries = {
       if (params?.limit) searchParams.set("limit", params.limit.toString());
 
       const response = await httpClient.get<{
-        rooms: Room[];
+        rooms: RoomRs[];
         hasNextPage: boolean;
       }>(`/rooms/available?${searchParams.toString()}`);
       return response.data;
@@ -33,14 +33,14 @@ export const roomQueries = {
   joinedList: () => ({
     queryKey: roomKeys.joinedLists(),
     queryFn: async () => {
-      const response = await httpClient.get<Room[]>("/rooms/joined");
+      const response = await httpClient.get<RoomRs[]>("/rooms/joined");
       return response.data;
     },
   }),
   detail: (roomId: string) => ({
     queryKey: roomKeys.detail(roomId),
     queryFn: async () => {
-      const response = await httpClient.get<Room>(`/rooms/${roomId}`);
+      const response = await httpClient.get<RoomRs>(`/rooms/${roomId}`);
       return response.data;
     },
   }),
@@ -55,7 +55,7 @@ export const roomMutations = {
   }),
   join: () => ({
     mutationFn: async (roomId: string) => {
-      const response = await httpClient.post<Room>(`/rooms/${roomId}/join`);
+      const response = await httpClient.post<RoomRs>(`/rooms/${roomId}/join`);
       return response.data;
     },
   }),

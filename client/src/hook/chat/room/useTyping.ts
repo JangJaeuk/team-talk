@@ -1,9 +1,9 @@
+import { MessageRs } from "@/rqrs/message/messageRs";
 import { useChatStore } from "@/store/useChatStore";
-import { Message } from "@/type";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseTypingProps {
-  messages: Message[];
+  messages: MessageRs[];
   userId?: string;
   onTypingChange: (isTyping: boolean) => void;
 }

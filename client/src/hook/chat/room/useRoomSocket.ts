@@ -1,16 +1,17 @@
 "use client";
 
 import { socketClient } from "@/lib/socket";
+import { MessageRs } from "@/rqrs/message/messageRs";
+import { RoomRs } from "@/rqrs/room/roomRs";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useChatStore } from "@/store/useChatStore";
-import { ChatRoom as ChatRoomType, Message } from "@/type";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseRoomSocketOptions {
-  onMessage?: (message: Message) => void;
-  onRoomJoinSuccess?: (room: ChatRoomType) => void;
+  onMessage?: (message: MessageRs) => void;
+  onRoomJoinSuccess?: (room: RoomRs) => void;
   onRoomLeaveSuccess?: () => void;
-  onMessageRead?: (messageId: string, readBy: Message["readBy"]) => void;
+  onMessageRead?: (messageId: string, readBy: MessageRs["readBy"]) => void;
 }
 
 interface TypingEvent {
@@ -79,7 +80,7 @@ export const useRoomSocket = (
     setSocketId(null);
   }, []);
 
-  const handleRoomJoinSuccess = useCallback((room: ChatRoomType) => {
+  const handleRoomJoinSuccess = useCallback((room: RoomRs) => {
     optionsRef.current.onRoomJoinSuccess?.(room);
   }, []);
 
@@ -87,7 +88,7 @@ export const useRoomSocket = (
     optionsRef.current.onRoomLeaveSuccess?.();
   }, []);
 
-  const handleNewMessage = useCallback((message: Message) => {
+  const handleNewMessage = useCallback((message: MessageRs) => {
     console.log("[Message] 수신:", message.content, "방:", message.roomId);
     if (message.roomId === roomIdRef.current) {
       optionsRef.current.onMessage?.(message);
@@ -140,7 +141,7 @@ export const useRoomSocket = (
     socket.on("message:new", handleNewMessage);
     socket.on(
       "message:read",
-      (messageId: string, readBy: Message["readBy"]) => {
+      (messageId: string, readBy: MessageRs["readBy"]) => {
         if (optionsRef.current.onMessageRead) {
           optionsRef.current.onMessageRead(messageId, readBy);
         }

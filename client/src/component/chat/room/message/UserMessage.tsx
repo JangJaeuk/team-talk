@@ -1,42 +1,34 @@
-import type { Message } from "@/type";
+import type { MessageRs } from "@/rqrs/message/messageRs";
+import { useAuthStore } from "@/store/useAuthStore";
 import Image from "next/image";
-import { FC } from "react";
+import { useMemo } from "react";
+import { MessageSettingsMenu } from "./menu/MessageSettingsMenu";
 
 interface Props {
-  message: Message;
-  userId?: string;
-  formatTimestamp: (timestamp: Message["createdAt"]) => string;
+  message: MessageRs;
   activeMenuMessageId: string | null;
-  setActiveMenuMessageId: (id: string | null) => void;
-  MessageSettingsMenu: FC<{
-    message: Message;
-    participants: { id: string; avatar: string; nickname: string }[];
-    messages: Message[];
-    activeMenuMessageId: string | null;
-    setActiveMenuMessageId: (id: string | null) => void;
-  }>;
   participants: { id: string; avatar: string; nickname: string }[];
-  messages: Message[];
-  prevMessage?: Message; // 이전 메시지 정보 추가
+  prevMessage?: MessageRs;
+  formatTimestamp: (timestamp: MessageRs["createdAt"]) => string;
+  setActiveMenuMessageId: (id: string | null) => void;
 }
 
 export const UserMessage = ({
   message,
-  userId,
-  formatTimestamp,
   activeMenuMessageId,
-  setActiveMenuMessageId,
-  MessageSettingsMenu,
   participants,
-  messages,
   prevMessage,
+  formatTimestamp,
+  setActiveMenuMessageId,
 }: Props) => {
-  const isCurrentUser = message.sender.id === userId;
+  const { user } = useAuthStore();
+
+  const isCurrentUser = message.sender.id === user?.id;
 
   // 이전 메시지와 현재 메시지 사이의 시간 차이 계산 (3분 = 180000ms)
-  const shouldShowProfile = () => {
-    if (isCurrentUser) return false; // 내 메시지는 프로필 표시 안 함
-    if (!prevMessage) return true; // 첫 메시지는 무조건 프로필 표시
+  const shouldShowProfile = useMemo(() => {
+    if (isCurrentUser) return false;
+    if (!prevMessage) return true;
 
     const timeDiff =
       new Date(message.createdAt).getTime() -
@@ -44,7 +36,7 @@ export const UserMessage = ({
     const isDifferentSender = prevMessage.sender.id !== message.sender.id;
 
     return timeDiff > 180000 || isDifferentSender;
-  };
+  }, [isCurrentUser, prevMessage, message.sender.id, message.createdAt]);
 
   return (
     <div
@@ -66,7 +58,6 @@ export const UserMessage = ({
             <MessageSettingsMenu
               message={message}
               participants={participants}
-              messages={messages}
               activeMenuMessageId={activeMenuMessageId}
               setActiveMenuMessageId={setActiveMenuMessageId}
             />
@@ -75,7 +66,7 @@ export const UserMessage = ({
         <div className="flex gap-2">
           {!isCurrentUser && (
             <div className="flex-shrink-0 w-8">
-              {shouldShowProfile() && (
+              {shouldShowProfile && (
                 <Image
                   src={`/avatars/${message.sender.avatar ?? "avatar1"}.svg`}
                   alt={message.sender.nickname}
@@ -91,7 +82,7 @@ export const UserMessage = ({
               isCurrentUser ? "bg-blue-500 text-white" : "bg-gray-200"
             }`}
           >
-            {!isCurrentUser && shouldShowProfile() && (
+            {!isCurrentUser && shouldShowProfile && (
               <div className="font-bold text-sm mb-1">
                 {message.sender.nickname}
               </div>

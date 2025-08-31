@@ -1,5 +1,5 @@
 import { httpClient } from "@/lib/axios";
-import type { Message } from "@/type";
+import type { MessageRs } from "@/rqrs/message/messageRs";
 
 export const messageKeys = {
   all: ["messages"] as const,
@@ -13,7 +13,7 @@ export const messageQueries = {
     queryKey: messageKeys.list(roomId, lastMessageId),
     queryFn: async () => {
       const response = await httpClient.get<{
-        messages: Message[];
+        messages: MessageRs[];
         hasNextPage: boolean;
       }>(`/rooms/${roomId}/messages`, {
         params: {
