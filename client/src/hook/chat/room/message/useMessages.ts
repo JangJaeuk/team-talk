@@ -2,9 +2,8 @@ import { socketClient } from "@/lib/socket";
 import { messageKeys, messageQueries } from "@/query/message";
 import type { MessageRs } from "@/rqrs/message/messageRs";
 import { useAuthStore } from "@/store/useAuthStore";
-import { formatTime } from "@/util/date";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
 
 interface UseMessagesProps {
@@ -20,6 +19,7 @@ export const useMessages = ({
 }: UseMessagesProps) => {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
+  const [showScrollDown, setShowScrollDown] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
@@ -48,16 +48,14 @@ export const useMessages = ({
     const container = chatContainerRef.current;
     if (!container) return false;
 
-    const threshold = 50;
-    return (
-      container.scrollHeight - container.scrollTop - container.clientHeight <=
-      threshold
-    );
+    const threshold = 100;
+    // flex-col-reverse에서는 scrollTop이 0에 가까울수록 맨 아래(최신 메시지)에 있는 것
+    return Math.abs(container.scrollTop) <= threshold;
   }, []);
 
   const scrollToBottom = useCallback(() => {
     chatContainerRef.current?.scrollTo({
-      top: chatContainerRef.current.scrollHeight,
+      top: 0,
       behavior: "smooth",
     });
   }, []);
@@ -99,10 +97,12 @@ export const useMessages = ({
         }
       );
 
-      // 메시지가 DOM에 렌더링된 후 스크롤
+      // 메시지가 DOM에 렌더링된 후 처리
       setTimeout(() => {
-        if (message.sender.id === user?.id || isScrolledToBottom()) {
+        if (message.sender.id === user?.id) {
           scrollToBottom();
+        } else if (!isScrolledToBottom()) {
+          setShowScrollDown(true);
         }
       }, 0);
 
@@ -123,10 +123,6 @@ export const useMessages = ({
     ]
   );
 
-  const formatTimestamp = (timestamp: MessageRs["createdAt"]) => {
-    return formatTime(new Date(timestamp));
-  };
-
   // 무한 스크롤 처리
   useEffect(() => {
     const loadNextPage = async () => {
@@ -143,7 +139,33 @@ export const useMessages = ({
     loadNextPage();
   }, [inView, hasNextPage, fetchNextPage]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const isBottom = isScrolledToBottom();
+      if (isBottom) {
+        setShowScrollDown(false);
+      }
+    };
+
+    const container = chatContainerRef.current;
+    if (container) {
+      container.addEventListener("scroll", handleScroll);
+      return () => container.removeEventListener("scroll", handleScroll);
+    }
+  }, [isScrolledToBottom]);
+
   const messages = data?.pages.flatMap((page) => page.messages) ?? [];
+
+  const setMessages = (
+    updater: MessageRs[] | ((prev: MessageRs[]) => MessageRs[])
+  ) => {
+    const newMessages =
+      typeof updater === "function" ? updater(messages) : updater;
+    queryClient.setQueryData(messageKeys.list(roomId), {
+      pages: [{ messages: newMessages, hasNextPage: false }],
+      pageParams: [undefined],
+    });
+  };
 
   return {
     messages,
@@ -151,19 +173,11 @@ export const useMessages = ({
     hasMore: hasNextPage,
     chatContainerRef,
     messageEndRef,
+    showScrollDown,
     loadMoreRef,
     handleNewMessage,
-    formatTimestamp,
     isScrolledToBottom,
-    setMessages: (
-      updater: MessageRs[] | ((prev: MessageRs[]) => MessageRs[])
-    ) => {
-      const newMessages =
-        typeof updater === "function" ? updater(messages) : updater;
-      queryClient.setQueryData(messageKeys.list(roomId), {
-        pages: [{ messages: newMessages, hasNextPage: false }],
-        pageParams: [undefined],
-      });
-    },
+    scrollToBottom,
+    setMessages,
   };
 };

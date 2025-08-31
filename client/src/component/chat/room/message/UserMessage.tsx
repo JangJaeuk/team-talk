@@ -1,5 +1,7 @@
 import type { MessageRs } from "@/rqrs/message/messageRs";
+import { ParticipantRs } from "@/rqrs/room/participantRs";
 import { useAuthStore } from "@/store/useAuthStore";
+import { formatTime } from "@/util/date";
 import Image from "next/image";
 import { useMemo } from "react";
 import { MessageSettingsMenu } from "./menu/MessageSettingsMenu";
@@ -7,9 +9,8 @@ import { MessageSettingsMenu } from "./menu/MessageSettingsMenu";
 interface Props {
   message: MessageRs;
   activeMenuMessageId: string | null;
-  participants: { id: string; avatar: string; nickname: string }[];
+  participants: ParticipantRs[];
   prevMessage?: MessageRs;
-  formatTimestamp: (timestamp: MessageRs["createdAt"]) => string;
   setActiveMenuMessageId: (id: string | null) => void;
 }
 
@@ -18,7 +19,6 @@ export const UserMessage = ({
   activeMenuMessageId,
   participants,
   prevMessage,
-  formatTimestamp,
   setActiveMenuMessageId,
 }: Props) => {
   const { user } = useAuthStore();
@@ -91,7 +91,7 @@ export const UserMessage = ({
             )}
             <div>{message.content}</div>
             <div className="text-xs opacity-75">
-              <span>{formatTimestamp(message.createdAt)}</span>
+              <span>{formatTime(new Date(message.createdAt))}</span>
             </div>
           </div>
         </div>

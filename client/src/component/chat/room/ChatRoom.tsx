@@ -42,10 +42,11 @@ export const ChatRoom = ({ roomId }: Props) => {
     chatContainerRef,
     messageEndRef,
     isLoading: isMessagesLoading,
+    showScrollDown,
     loadMoreRef,
     handleNewMessage,
-    formatTimestamp,
     setMessages,
+    scrollToBottom,
   } = useMessages({
     roomId,
     isJoined: isJoined || false,
@@ -105,12 +106,8 @@ export const ChatRoom = ({ roomId }: Props) => {
         <>
           <div
             ref={chatContainerRef}
-            className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col-reverse pl-2 pr-4 pt-4 pb-0 sm:pb-4 relative z-10 custom-scrollbar"
+            className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col-reverse pl-2 pr-4 pt-4 pb-10 relative z-10 custom-scrollbar"
           >
-            <div key="typing-indicator" className="text-gray-500 text-sm mb-2">
-              {getTypingMessage()}
-            </div>
-
             {messages.map((msg, index) => {
               const currentDate = new Date(msg.createdAt);
               const prevMessage = messages[index + 1];
@@ -154,7 +151,6 @@ export const ChatRoom = ({ roomId }: Props) => {
                         prevMessage={messages[index + 1]}
                         activeMenuMessageId={activeMenuMessageId}
                         participants={room?.participants || []}
-                        formatTimestamp={formatTimestamp}
                         setActiveMenuMessageId={setActiveMenuMessageId}
                       />
                     );
@@ -175,6 +171,41 @@ export const ChatRoom = ({ roomId }: Props) => {
             <div ref={messageEndRef} />
           </div>
 
+          {getTypingMessage() && (
+            <div className="absolute bottom-[64px] sm:bottom-[90px] left-4 z-[60]">
+              <div className="inline-flex items-center gap-1 bg-white text-gray-500 text-sm px-4 py-2 rounded-lg shadow-md">
+                {getTypingMessage()}
+                <span className="flex gap-1">
+                  <span className="w-1 h-1 bg-gray-500 rounded-full animate-bounce" />
+                  <span className="w-1 h-1 bg-gray-500 rounded-full animate-bounce [animation-delay:0.2s]" />
+                  <span className="w-1 h-1 bg-gray-500 rounded-full animate-bounce [animation-delay:0.4s]" />
+                </span>
+              </div>
+            </div>
+          )}
+          {showScrollDown && (
+            <div className="absolute bottom-[72px] sm:bottom-[98px] left-1/2 -translate-x-1/2 z-[60]">
+              <button
+                onClick={scrollToBottom}
+                className="inline-flex items-center gap-1 bg-white text-gray-500 text-sm px-4 py-2 rounded-full shadow-md hover:bg-gray-50 transition-colors"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                  />
+                </svg>
+                새 메시지
+              </button>
+            </div>
+          )}
           <MessageForm
             newMessage={newMessage}
             onSubmit={handleSubmit}

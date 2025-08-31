@@ -1,11 +1,12 @@
 import { UserRs } from "@/rqrs/auth/userRs";
 import { MessageRs } from "@/rqrs/message/messageRs";
+import { ParticipantRs } from "@/rqrs/room/participantRs";
 import { useEffect, useMemo, useState } from "react";
 
 interface Props {
   menuRef: React.RefObject<HTMLDivElement | null>;
   showReadBy: boolean;
-  participants: { id: string; avatar: string; nickname: string }[];
+  participants: ParticipantRs[];
   message: MessageRs;
   user: UserRs | null;
   setShowReadBy: (show: boolean) => void;

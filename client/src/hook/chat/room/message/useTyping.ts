@@ -36,11 +36,9 @@ export const useTyping = ({
 
     const nicknames = typingUserIds.map(getTypingUserNickname);
 
-    return `${
-      nicknames.length > 1
-        ? `${nicknames[0]}님 외 ${nicknames.length - 1}명`
-        : `${nicknames[0]}님`
-    }이 입력하고 있습니다...`;
+    return nicknames.length > 1
+      ? `${nicknames[0]} 외 ${nicknames.length - 1}명`
+      : nicknames[0];
   }, [typingUsers, userId, getTypingUserNickname]);
 
   const handleInputChange = useCallback(

@@ -1,12 +1,13 @@
 import { useMessageSettingsMenu } from "@/hook/chat/room/message/useMessageSettingsMenu";
 import type { MessageRs } from "@/rqrs/message/messageRs";
+import { ParticipantRs } from "@/rqrs/room/participantRs";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useState } from "react";
 import { MessageReadInfo } from "./board/MessageReadInfo";
 
 interface Props {
   message: MessageRs;
-  participants: { id: string; avatar: string; nickname: string }[];
+  participants: ParticipantRs[];
   activeMenuMessageId: string | null;
   setActiveMenuMessageId: (id: string | null) => void;
 }
