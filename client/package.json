@@ -1,5 +1,7 @@
 {
-  "name": "client",
+  "name": "team-talk-client",
+  "description": "실시간 채팅을 위한 Team Talk 클라이언트 애플리케이션",
+  "author": "Jaeuk Jang",
   "engines": {
     "node": ">=18.0.0",
     "yarn": ">=1.22.0"
