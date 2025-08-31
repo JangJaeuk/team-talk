@@ -20,6 +20,7 @@ export const authMiddleware = async (
       uid: decoded.uid,
       email: decoded.email,
       nickname: decoded.nickname,
+      avatar: decoded.avatar,
     };
 
     next();

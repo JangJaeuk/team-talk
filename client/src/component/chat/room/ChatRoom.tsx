@@ -11,6 +11,7 @@ import { useState } from "react";
 import { ChatRoomSkeleton } from "./ChatRoomSkeleton";
 import { MessageForm } from "./form/MessageForm";
 import { ChatRoomHeader } from "./layout/ChatRoomHeader";
+import { ChatRoomSidePanel } from "./layout/ChatRoomSidePanel";
 import { SystemMessage } from "./message/SystemMessage";
 import { UserMessage } from "./message/UserMessage";
 
@@ -24,6 +25,7 @@ export const ChatRoom = ({ roomId }: Props) => {
   const [activeMenuMessageId, setActiveMenuMessageId] = useState<string | null>(
     null
   );
+  const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
 
   // 채팅방 관련 로직
   const { room, isJoined, handleJoinRoom, handleLeaveRoom, setRoom } = useRoom({
@@ -84,14 +86,22 @@ export const ChatRoom = ({ roomId }: Props) => {
         room={room}
         isJoined={isJoined || false}
         onJoinRoom={handleJoinRoom}
-        onLeaveRoom={handleLeaveRoom}
+        onToggleSidePanel={() => setIsSidePanelOpen(true)}
       />
+      {isJoined && (
+        <ChatRoomSidePanel
+          room={room}
+          isOpen={isSidePanelOpen}
+          onClose={() => setIsSidePanelOpen(false)}
+          onLeaveRoom={handleLeaveRoom}
+        />
+      )}
 
       {isJoined ? (
         <>
           <div
             ref={chatContainerRef}
-            className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col-reverse pl-2 pr-4 pt-4 pb-0 sm:pb-4"
+            className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col-reverse pl-2 pr-4 pt-4 pb-0 sm:pb-4 relative z-10"
           >
             <div key="typing-indicator" className="text-gray-500 text-sm mb-2">
               {getTypingMessage()}
@@ -115,7 +125,7 @@ export const ChatRoom = ({ roomId }: Props) => {
                       message={{
                         id: `date-${msg.id}`,
                         content: formatDate(currentDate),
-                        type: "system",
+                        type: msg.type,
                         sender: msg.sender,
                         roomId: msg.roomId,
                         createdAt: msg.createdAt,
@@ -124,20 +134,27 @@ export const ChatRoom = ({ roomId }: Props) => {
                       }}
                     />
                   )}
-                  {msg.type === "system" || msg.type === "system:create" ? (
-                    msg.type === "system:create" ? null : (
-                      <SystemMessage message={msg} />
-                    )
-                  ) : (
-                    <UserMessage
-                      message={msg}
-                      prevMessage={messages[index + 1]}
-                      activeMenuMessageId={activeMenuMessageId}
-                      participants={room?.participants || []}
-                      formatTimestamp={formatTimestamp}
-                      setActiveMenuMessageId={setActiveMenuMessageId}
-                    />
-                  )}
+                  {(() => {
+                    // 시스템 생성 메시지는 보여주지 않음
+                    if (msg.type === "system:create") return null;
+
+                    // 시스템 메시지 (참여/퇴장)
+                    if (msg.type?.startsWith("system")) {
+                      return <SystemMessage message={msg} />;
+                    }
+
+                    // 일반 메시지
+                    return (
+                      <UserMessage
+                        message={msg}
+                        prevMessage={messages[index + 1]}
+                        activeMenuMessageId={activeMenuMessageId}
+                        participants={room?.participants || []}
+                        formatTimestamp={formatTimestamp}
+                        setActiveMenuMessageId={setActiveMenuMessageId}
+                      />
+                    );
+                  })()}
                 </div>
               );
             })}

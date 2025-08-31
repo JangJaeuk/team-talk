@@ -110,7 +110,7 @@ export const setupSocketHandlers = (
           avatar: socket.data.user.avatar || "avatar1",
         },
         roomId,
-        type: "system" as const,
+        type: "system:join" as const,
       };
 
       const systemMessageId = await messageService.createMessage(
@@ -158,10 +158,10 @@ export const setupSocketHandlers = (
           email: socket.data.user.email!,
           nickname: socket.data.user.nickname,
           isOnline: true,
-          avatar: socket.data.user.avatar || "avatar1",
+          avatar: socket.data.user.avatar,
         },
         roomId,
-        type: "system" as const,
+        type: "system:leave" as const,
       };
 
       const systemMessageId = await messageService.createMessage(

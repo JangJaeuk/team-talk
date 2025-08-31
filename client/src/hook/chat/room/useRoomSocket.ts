@@ -1,10 +1,12 @@
 "use client";
 
 import { socketClient } from "@/lib/socket";
+import { roomKeys } from "@/query/room";
 import { MessageRs } from "@/rqrs/message/messageRs";
 import { RoomRs } from "@/rqrs/room/roomRs";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useChatStore } from "@/store/useChatStore";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseRoomSocketOptions {
@@ -25,6 +27,7 @@ export const useRoomSocket = (
 ) => {
   const { user } = useAuthStore();
   const { setTypingStatus } = useChatStore();
+  const queryClient = useQueryClient();
   const joinedRoom = useRef<string | null>(null);
   const [socketId, setSocketId] = useState<string | null>(null);
   const optionsRef = useRef(options);
@@ -88,16 +91,43 @@ export const useRoomSocket = (
     optionsRef.current.onRoomLeaveSuccess?.();
   }, []);
 
-  const handleNewMessage = useCallback((message: MessageRs) => {
-    console.log("[Message] 수신:", message.content, "방:", message.roomId);
-    if (message.roomId === roomIdRef.current) {
-      optionsRef.current.onMessage?.(message);
-      // 메시지를 받으면 자동으로 읽음 처리
-      if (socketClient.isConnected()) {
-        socketClient.emitSocket("message:read", message.id);
+  const handleNewMessage = useCallback(
+    (message: MessageRs) => {
+      console.log("[Message] 수신:", message.content, "방:", message.roomId);
+      if (message.roomId === roomIdRef.current) {
+        // 시스템 메시지인 경우 방 정보 캐시 업데이트
+        if (message.type === "system:join" || message.type === "system:leave") {
+          queryClient.setQueryData(
+            roomKeys.detail(message.roomId),
+            (oldData: RoomRs | undefined) => {
+              if (!oldData) return oldData;
+
+              if (message.type === "system:join") {
+                return {
+                  ...oldData,
+                  participants: [...oldData.participants, message.sender],
+                };
+              } else {
+                return {
+                  ...oldData,
+                  participants: oldData.participants.filter(
+                    (p) => p.id !== message.sender.id
+                  ),
+                };
+              }
+            }
+          );
+        }
+
+        optionsRef.current.onMessage?.(message);
+        // 메시지를 받으면 자동으로 읽음 처리
+        if (socketClient.isConnected()) {
+          socketClient.emitSocket("message:read", message.id);
+        }
       }
-    }
-  }, []);
+    },
+    [queryClient]
+  );
 
   const handleTypingStart = useCallback((data: TypingEvent) => {
     if (data.roomId === roomIdRef.current) {

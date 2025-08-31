@@ -65,32 +65,28 @@ export const createRoomsRouter = (
         participants: [req.user!.uid],
       });
 
-      const systemMessage = await messageService.createMessage({
+      // 시스템 메시지 생성 및 저장
+      const systemMessageData = {
         roomId,
-        content: `채팅방이 생성되었습니다.`,
+        content: "채팅방이 생성되었습니다.",
         sender: {
-          id: "system",
-          email: "system",
-          nickname: "system",
+          id: req.user!.uid,
+          email: req.user!.email!,
+          nickname: req.user!.nickname!,
           isOnline: true,
-          avatar: "avatar1",
+          avatar: req.user!.avatar!,
         },
-        type: "system:create",
-      });
+        type: "system:create" as const,
+      };
+
+      const systemMessage = await messageService.createMessage(
+        systemMessageData
+      );
 
       // 해당 방의 모든 클라이언트에게 새 메시지 전송
       io.to(roomId).emit("message:new", {
         id: systemMessage,
-        roomId,
-        content: `채팅방이 생성되었습니다.`,
-        sender: {
-          id: "system",
-          email: "system",
-          nickname: "system",
-          isOnline: true,
-          avatar: "avatar1",
-        },
-        type: "system:create",
+        ...systemMessageData,
         createdAt: new Date(),
         isEdited: false,
         readBy: [],
@@ -113,37 +109,30 @@ export const createRoomsRouter = (
       const { roomId } = req.params;
       const room = await roomService.joinRoom(roomId, req.user!.uid);
 
-      // 시스템 메시지 저장 및 전송
-      const systemMessage = await messageService.createMessage({
+      const systemMessageData = {
         roomId,
         content: `${
           req.user!.nickname || "알 수 없는 사용자"
         }님이 참여했습니다.`,
         sender: {
-          id: "system",
-          email: "system",
-          nickname: "system",
+          id: req.user!.uid,
+          email: req.user!.email!,
+          nickname: req.user!.nickname!,
           isOnline: true,
-          avatar: "avatar1",
+          avatar: req.user!.avatar!,
         },
-        type: "system",
-      });
+        type: "system:join" as const,
+      };
+
+      // 시스템 메시지 저장 및 전송
+      const systemMessage = await messageService.createMessage(
+        systemMessageData
+      );
 
       // 해당 방의 모든 클라이언트에게 새 메시지 전송
       io.to(roomId).emit("message:new", {
         id: systemMessage,
-        roomId,
-        content: `${
-          req.user!.nickname || "알 수 없는 사용자"
-        }님이 참여했습니다.`,
-        sender: {
-          id: "system",
-          email: "system",
-          nickname: "system",
-          isOnline: true,
-          avatar: "avatar1",
-        },
-        type: "system",
+        ...systemMessageData,
         createdAt: new Date(),
         isEdited: false,
         readBy: [],

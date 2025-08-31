@@ -2,7 +2,7 @@ import { socketClient } from "@/lib/socket";
 import { roomKeys, roomQueries } from "@/query/room";
 import type { RoomRs } from "@/rqrs/room/roomRs";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 
@@ -15,13 +15,13 @@ export const useRoom = ({ roomId }: UseRoomProps) => {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const { data: room } = useQuery({
+  const { data: room } = useSuspenseQuery({
     ...roomQueries.detail(roomId),
-    enabled: !!roomId,
+    staleTime: 0,
   });
 
   const isJoined = useMemo(() => {
-    if (!user?.id || !room) return false;
+    if (!user?.id) return false;
     return room.participants.some((participant) => participant.id === user.id);
   }, [user?.id, room]);
 
@@ -34,7 +34,7 @@ export const useRoom = ({ roomId }: UseRoomProps) => {
     if (!user) return;
     if (window.confirm("정말 채팅방을 탈퇴하시겠습니까?")) {
       socketClient.emitSocket("room:leave", roomId);
-      router.push("/rooms"); // 방 목록으로 이동
+      router.push("/rooms");
       // 채팅방 찾기 목록 캐시 무효화
       queryClient.invalidateQueries({ queryKey: roomKeys.availableLists() });
     }

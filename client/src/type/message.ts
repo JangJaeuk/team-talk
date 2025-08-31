@@ -1,1 +1,5 @@
-export type MessageType = "normal" | "system" | "system:create";
+export type MessageType =
+  | "normal"
+  | "system:join"
+  | "system:leave"
+  | "system:create";

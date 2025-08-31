@@ -37,6 +37,12 @@ export interface RoomParticipant {
   joinedAt: Date;
 }
 
+export type MessageType =
+  | "normal"
+  | "system:join"
+  | "system:leave"
+  | "system:create";
+
 export interface Message {
   id: string;
   content: string;
@@ -44,7 +50,7 @@ export interface Message {
   roomId: string;
   createdAt: Date;
   isEdited: boolean;
-  type: "normal" | "system" | "system:create";
+  type: MessageType;
   readBy: {
     userId: string;
     readAt: Date;

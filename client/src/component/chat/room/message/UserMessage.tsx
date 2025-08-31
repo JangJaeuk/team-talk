@@ -33,7 +33,9 @@ export const UserMessage = ({
     const timeDiff =
       new Date(message.createdAt).getTime() -
       new Date(prevMessage.createdAt).getTime();
-    const isDifferentSender = prevMessage.sender.id !== message.sender.id;
+    const isDifferentSender =
+      prevMessage.sender.id !== message.sender.id ||
+      prevMessage.type?.startsWith("system");
 
     return timeDiff > 180000 || isDifferentSender;
   }, [isCurrentUser, prevMessage, message.sender.id, message.createdAt]);

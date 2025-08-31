@@ -17,6 +17,7 @@ export const socketAuthMiddleware = async (
       uid: decoded.uid,
       email: decoded.email || "",
       nickname: decoded.nickname || "",
+      avatar: decoded.avatar || "avatar1",
     };
     next();
   } catch (error) {

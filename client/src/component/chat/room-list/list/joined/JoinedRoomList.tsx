@@ -51,7 +51,8 @@ export const JoinedRoomList = ({ rooms, onEnterRoom }: Props) => {
               {room.lastMessage &&
                 room.lastMessage.type !== "system:create" && (
                   <p className="text-sm text-gray-600 line-clamp-1">
-                    {room.lastMessage.type === "system"
+                    {room.lastMessage.type === "system:join" ||
+                    room.lastMessage.type === "system:leave"
                       ? room.lastMessage.content
                       : `${
                           room.lastMessage.sender.id === user?.id
