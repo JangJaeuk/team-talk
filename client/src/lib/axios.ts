@@ -5,11 +5,6 @@ import {
 } from "@/util/token";
 import axios, { AxiosInstance } from "axios";
 
-interface TokenResponse {
-  accessToken: string;
-  refreshToken: string;
-}
-
 class HttpClient {
   private static instance: HttpClient;
   private api: AxiosInstance;
@@ -96,14 +91,21 @@ class HttpClient {
 
   private async refreshAccessToken(): Promise<string | null> {
     try {
-      // 서버에서 httpOnly 쿠키의 refreshToken을 사용
-      const response = await this.api.post<TokenResponse>("/auth/refresh");
-
-      const { accessToken } = response.data;
-      setAccessToken(accessToken);
-      return accessToken;
-    } catch {
-      this.handleUnauthorized();
+      const response = await this.api.post<{ accessToken: string }>(
+        "/auth/refresh"
+      );
+      const newAccessToken = response.data.accessToken;
+      setAccessToken(newAccessToken);
+      return newAccessToken;
+    } catch (error: unknown) {
+      if (
+        axios.isAxiosError(error) &&
+        error.response?.data?.error === "Invalid refresh token"
+      ) {
+        // Refresh Token이 유효하지 않은 경우
+        removeAccessToken();
+        window.location.href = "/login";
+      }
       return null;
     }
   }

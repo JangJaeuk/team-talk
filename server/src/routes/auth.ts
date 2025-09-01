@@ -3,6 +3,7 @@ import { db } from "../config/firebase";
 import { REFRESH_TOKEN_EXPIRES_NUMBER } from "../constants/auth";
 import { authMiddleware } from "../middleware/auth";
 import { authService } from "../services/auth";
+import { User } from "../types";
 
 const router = Router();
 
@@ -59,37 +60,48 @@ router.post("/login", async (req, res) => {
 router.post("/refresh", async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) {
-      return res.status(401).json({ error: "No refresh token" });
-    }
 
     if (!refreshToken) {
-      return res.status(401).json({ error: "No refresh token" });
+      return res.status(401).json({ error: "No refresh token provided" });
     }
 
-    // Refresh Token 검증
-    const decoded = authService.verifyRefreshToken(refreshToken);
+    try {
+      const decoded = authService.verifyRefreshToken(refreshToken);
+      const user = await db.collection("users").doc(decoded.uid).get();
 
-    // 사용자 정보 조회
-    const userDoc = await db.collection("users").doc(decoded.uid).get();
-    if (!userDoc.exists) {
-      return res.status(401).json({ error: "User not found" });
+      if (!user.exists) {
+        res.clearCookie("refreshToken", {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+          path: "/",
+        });
+        return res.status(401).json({ error: "Invalid refresh token" });
+      }
+
+      const userData = user.data() as User;
+      const newAccessToken = authService.generateAccessToken({
+        id: user.id,
+        email: userData.email,
+        nickname: userData.nickname,
+        avatar: userData.avatar,
+        isOnline: userData.isOnline,
+      });
+
+      return res.json({ accessToken: newAccessToken });
+    } catch (error) {
+      // Refresh Token이 유효하지 않은 경우 쿠키 삭제
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        path: "/",
+      });
+      return res.status(401).json({ error: "Invalid refresh token" });
     }
-
-    const user = {
-      id: userDoc.id,
-      email: userDoc.data()?.email,
-      nickname: userDoc.data()?.nickname,
-      isOnline: true,
-      avatar: userDoc.data()?.avatar,
-    };
-
-    // 새로운 Access Token 발급
-    const accessToken = authService.generateAccessToken(user);
-
-    res.json({ accessToken });
   } catch (error) {
-    res.status(401).json({ error: "Invalid refresh token" });
+    console.error("Error refreshing token:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 
