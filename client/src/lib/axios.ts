@@ -98,6 +98,7 @@ class HttpClient {
       setAccessToken(newAccessToken);
       return newAccessToken;
     } catch (error: unknown) {
+      console.log("확인해봐야됨", error);
       if (
         axios.isAxiosError(error) &&
         error.response?.data?.error === "Invalid refresh token"
