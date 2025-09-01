@@ -51,12 +51,10 @@ class HttpClient {
     this.api.interceptors.response.use(
       (response) => response,
       async (error) => {
-        console.log("response interceptor error:", error);
         const originalRequest = error.config;
 
         // Access Token이 없거나 만료된 경우 refresh 시도
         if (error.response?.status === 401 && !originalRequest._retry) {
-          console.log("trying to refresh token...");
           if (this.refreshing) {
             // 토큰 갱신 중이면 대기
             return new Promise((resolve) => {
@@ -71,9 +69,7 @@ class HttpClient {
           this.refreshing = true;
 
           try {
-            console.log("refreshAccessToken start");
             const token = await this.refreshAccessToken();
-            console.log("refreshAccessToken result:", token);
             if (token) {
               // 대기 중인 요청들 처리
               this.onRefreshSuccess(token);
@@ -107,7 +103,6 @@ class HttpClient {
       setAccessToken(newAccessToken);
       return newAccessToken;
     } catch (error: unknown) {
-      console.log("확인해봐야됨", error);
       if (axios.isAxiosError(error) && error.response?.status === 401) {
         // Refresh Token이 유효하지 않은 경우
         this.handleUnauthorized();
