@@ -31,9 +31,14 @@ export const JoinedRoomList = ({ rooms, onEnterRoom }: Props) => {
             <div className="flex-1 min-w-0 flex flex-col justify-between">
               <div className="flex items-center justify-between min-w-0">
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <h3 className="text-base sm:text-lg font-semibold truncate">
-                    {room.name}
-                  </h3>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <h3 className="text-base sm:text-lg font-semibold truncate">
+                      {room.name}
+                    </h3>
+                    <span className="text-sm text-gray-500 shrink-0">
+                      {room.participants.length}
+                    </span>
+                  </div>
                   {room.unreadCount > 0 && (
                     <span className="shrink-0 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
                       {room.unreadCount}
