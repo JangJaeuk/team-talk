@@ -1,5 +1,9 @@
 import { ClientToServerEvents, ServerToClientEvents } from "@/type/socketEvent";
-import { getAccessToken, setAccessToken } from "@/util/token";
+import {
+  getAccessToken,
+  removeAccessToken,
+  setAccessToken,
+} from "@/util/token";
 import { EventEmitter } from "events";
 import { io, Socket } from "socket.io-client";
 
@@ -12,6 +16,7 @@ class SocketClient extends EventEmitter {
     args: Parameters<ClientToServerEvents[keyof ClientToServerEvents]>;
   } | null = null;
   private refreshAttempts: number = 0;
+  private refreshing: boolean = false;
   private readonly MAX_REFRESH_ATTEMPTS: number = 3;
   private readonly SOCKET_URL =
     process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:4000";
@@ -35,6 +40,9 @@ class SocketClient extends EventEmitter {
       });
       if (!response.ok) {
         if (response.status === 401) {
+          // Refresh Token이 유효하지 않은 경우
+          this.disconnect();
+          removeAccessToken();
           window.location.href = "/login";
         }
         return null;
@@ -102,10 +110,18 @@ class SocketClient extends EventEmitter {
       if (error.message === "Invalid access token") {
         if (this.refreshAttempts >= this.MAX_REFRESH_ATTEMPTS) {
           console.error("[Socket] 최대 리프레시 시도 횟수 초과");
+          this.disconnect();
+          removeAccessToken();
           window.location.href = "/login";
           return;
         }
 
+        if (this.refreshing) {
+          console.log("[Socket] 토큰 갱신 진행 중...");
+          return;
+        }
+
+        this.refreshing = true;
         this.refreshAttempts++;
         console.log(
           `[Socket] 토큰 리프레시 시도 ${this.refreshAttempts}/${this.MAX_REFRESH_ATTEMPTS}`
@@ -117,10 +133,12 @@ class SocketClient extends EventEmitter {
           // 새 토큰으로 재연결 시도
           this.disconnect();
           this.connect();
-        } else {
-          window.location.href = "/login";
         }
+        this.refreshing = false;
+        // refreshToken에서 401 에러 시 자동으로 로그인 페이지로 리다이렉트됨
       } else if (error.message === "Authentication error") {
+        this.disconnect();
+        removeAccessToken();
         window.location.href = "/login";
       }
     });
@@ -131,10 +149,18 @@ class SocketClient extends EventEmitter {
       if (error.message === "Invalid access token") {
         if (this.refreshAttempts >= this.MAX_REFRESH_ATTEMPTS) {
           console.error("[Socket] 최대 리프레시 시도 횟수 초과");
+          this.disconnect();
+          removeAccessToken();
           window.location.href = "/login";
           return;
         }
 
+        if (this.refreshing) {
+          console.log("[Socket] 토큰 갱신 진행 중...");
+          return;
+        }
+
+        this.refreshing = true;
         this.refreshAttempts++;
         console.log(
           `[Socket] 토큰 리프레시 시도 ${this.refreshAttempts}/${this.MAX_REFRESH_ATTEMPTS}`
@@ -144,9 +170,9 @@ class SocketClient extends EventEmitter {
         if (newToken) {
           this.disconnect();
           this.connect();
-        } else {
-          window.location.href = "/login";
         }
+        this.refreshing = false;
+        // refreshToken에서 401 에러 시 자동으로 로그인 페이지로 리다이렉트됨
       }
     });
   }
