@@ -95,21 +95,22 @@ class HttpClient {
 
   private async refreshAccessToken(): Promise<string | null> {
     try {
-      const response = await this.api.post<{ accessToken: string }>(
-        "/auth/refresh"
+      // 인터셉터를 거치지 않는 axios 인스턴스 생성
+      const response = await axios.post<{ accessToken: string }>(
+        `${this.API_URL}/auth/refresh`,
+        {},
+        {
+          withCredentials: true,
+        }
       );
       const newAccessToken = response.data.accessToken;
       setAccessToken(newAccessToken);
       return newAccessToken;
     } catch (error: unknown) {
       console.log("확인해봐야됨", error);
-      if (
-        axios.isAxiosError(error) &&
-        error.response?.data?.error === "Invalid refresh token"
-      ) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
         // Refresh Token이 유효하지 않은 경우
-        removeAccessToken();
-        window.location.href = "/login";
+        this.handleUnauthorized();
       }
       return null;
     }
