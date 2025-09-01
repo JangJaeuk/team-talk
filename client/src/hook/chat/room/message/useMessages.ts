@@ -23,6 +23,7 @@ export const useMessages = ({
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
+  const hasNewMessageRef = useRef(false);
   const { ref: loadMoreRef, inView } = useInView({
     threshold: 0.1,
     rootMargin: "300px",
@@ -54,10 +55,18 @@ export const useMessages = ({
   }, []);
 
   const scrollToBottom = useCallback(() => {
-    chatContainerRef.current?.scrollTo({
+    if (!chatContainerRef.current) return;
+
+    chatContainerRef.current.scrollTo({
       top: 0,
       behavior: "smooth",
     });
+
+    // 스크롤 애니메이션이 완료된 후 버튼 상태 업데이트
+    setTimeout(() => {
+      setShowScrollDown(false);
+      hasNewMessageRef.current = false;
+    }, 50);
   }, []);
 
   const handleNewMessage = useCallback(
@@ -102,6 +111,7 @@ export const useMessages = ({
         if (message.sender.id === user?.id) {
           scrollToBottom();
         } else if (!isScrolledToBottom()) {
+          hasNewMessageRef.current = true;
           setShowScrollDown(true);
         }
       }, 0);
@@ -144,6 +154,7 @@ export const useMessages = ({
       const isBottom = isScrolledToBottom();
       if (isBottom) {
         setShowScrollDown(false);
+        hasNewMessageRef.current = false;
       }
     };
 
