@@ -17,6 +17,7 @@ interface ChatState {
   updateMessage: (messageId: string, content: string) => void;
   deleteMessage: (messageId: string) => void;
   setTypingStatus: (userId: string, isTyping: boolean) => void;
+  clearTypingUsers: () => void;
   clearMessages: () => void;
   setError: (error: string | null) => void;
   setRooms: (rooms: RoomRs[]) => void;
@@ -82,6 +83,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
         [userId]: isTyping,
       },
     }));
+  },
+
+  clearTypingUsers: () => {
+    set({ typingUsers: {} });
   },
 
   clearMessages: () => {

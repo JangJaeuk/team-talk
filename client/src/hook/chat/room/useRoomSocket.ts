@@ -26,7 +26,7 @@ export const useRoomSocket = (
   options: UseRoomSocketOptions = {}
 ) => {
   const { user } = useAuthStore();
-  const { setTypingStatus } = useChatStore();
+  const { setTypingStatus, clearTypingUsers } = useChatStore();
   const queryClient = useQueryClient();
   const joinedRoom = useRef<string | null>(null);
   const [socketId, setSocketId] = useState<string | null>(null);
@@ -53,6 +53,8 @@ export const useRoomSocket = (
     }
 
     console.log("[Room] 방 입장 시도:", currentRoomId);
+    // 방 입장 시 타이핑 상태 초기화
+    clearTypingUsers();
     socketClient.emitSocket("room:enter", currentRoomId);
     joinedRoom.current = currentRoomId;
   }, []);
@@ -65,6 +67,8 @@ export const useRoomSocket = (
     }
 
     console.log("[Room] 방 퇴장:", currentRoomId);
+    // 방 퇴장 시 타이핑 상태 초기화
+    clearTypingUsers();
     socketClient.emitSocket("room:exit", currentRoomId);
     joinedRoom.current = null;
   }, []);
@@ -79,6 +83,8 @@ export const useRoomSocket = (
 
   const handleDisconnect = useCallback((reason: string) => {
     console.log("[Socket] 연결 끊김:", reason);
+    // 소켓 연결 끊김 시 타이핑 상태 초기화
+    clearTypingUsers();
     joinedRoom.current = null;
     setSocketId(null);
   }, []);
