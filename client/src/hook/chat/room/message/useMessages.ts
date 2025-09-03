@@ -2,7 +2,10 @@ import { socketClient } from "@/lib/socket";
 import { messageKeys, messageQueries } from "@/query/message";
 import type { MessageRs } from "@/rqrs/message/messageRs";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useQueryClient,
+  useSuspenseInfiniteQuery,
+} from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
 
@@ -29,21 +32,21 @@ export const useMessages = ({
     rootMargin: "300px",
   });
 
-  const { data, isLoading, fetchNextPage, hasNextPage } = useInfiniteQuery({
-    queryKey: messageKeys.list(roomId),
-    queryFn: async ({ pageParam }) => {
-      const { queryFn } = messageQueries.list(roomId, pageParam);
-      return queryFn();
-    },
-    staleTime: 0,
-    enabled: !!roomId && isJoined,
-    getNextPageParam: (lastPage) => {
-      if (!lastPage.hasNextPage) return undefined;
-      const lastMessage = lastPage.messages[lastPage.messages.length - 1];
-      return lastMessage?.id;
-    },
-    initialPageParam: undefined as string | undefined,
-  });
+  const { data, isLoading, fetchNextPage, hasNextPage } =
+    useSuspenseInfiniteQuery({
+      queryKey: messageKeys.list(roomId),
+      queryFn: async ({ pageParam }) => {
+        const { queryFn } = messageQueries.list(roomId, pageParam);
+        return queryFn();
+      },
+      staleTime: 0,
+      getNextPageParam: (lastPage) => {
+        if (!lastPage.hasNextPage) return undefined;
+        const lastMessage = lastPage.messages[lastPage.messages.length - 1];
+        return lastMessage?.id;
+      },
+      initialPageParam: undefined as string | undefined,
+    });
 
   const isScrolledToBottom = useCallback(() => {
     const container = chatContainerRef.current;
