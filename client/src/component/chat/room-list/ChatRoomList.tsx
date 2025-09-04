@@ -1,5 +1,6 @@
 "use client";
 
+import { useGlobalRoomListSocket } from "@/hook/chat/room-list/useGlobalRoomListSocket";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { RoomListHeader } from "./layout/RoomListHeader";
@@ -14,6 +15,9 @@ export const ChatRoomList = () => {
     return tabType === "available" ? "available" : "joined";
   });
   const router = useRouter();
+
+  // 전역 소켓 연결 관리 - 탭 전환과 상관없이 항상 유지
+  useGlobalRoomListSocket();
 
   const handleTabChange = (tab: "joined" | "available") => {
     setActiveTab(tab);

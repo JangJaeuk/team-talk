@@ -1,8 +1,6 @@
 import { socketClient } from "@/lib/socket";
-import { roomKeys } from "@/query/room";
 import { RoomRs } from "@/rqrs/room/roomRs";
 import { useChatStore } from "@/store/useChatStore";
-import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 
 interface UseRoomSocketProps {
@@ -10,13 +8,16 @@ interface UseRoomSocketProps {
   fetchRooms: () => Promise<void>;
 }
 
+/**
+ * 방 입장/퇴장 관련 소켓 이벤트만 처리하는 훅
+ * 전역 소켓 연결은 useGlobalRoomListSocket에서 관리됨
+ */
 export const useJoinedRoomListSocket = ({
   onJoinRoom,
   fetchRooms,
 }: UseRoomSocketProps) => {
   const { markRoomAsRead } = useChatStore();
   const [socketId, setSocketId] = useState<string | null>(null);
-  const queryClient = useQueryClient();
 
   const handleSocketChange = useCallback(
     (newSocket: ReturnType<typeof socketClient.getSocket>) => {
@@ -34,19 +35,6 @@ export const useJoinedRoomListSocket = ({
       socketClient.off("socket:connected", handleSocketChange);
     };
   }, []);
-
-  // 이벤트 핸들러들을 useCallback으로 메모이제이션
-  const handleRoomList = useCallback(
-    (updatedRooms: RoomRs[]) => {
-      console.log("Received updated room list:", updatedRooms);
-      queryClient.setQueryData(roomKeys.joinedLists(), updatedRooms);
-    },
-    [queryClient]
-  );
-
-  const handleNewMessage = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: roomKeys.joinedLists() });
-  }, [queryClient]);
 
   const handleRoomJoinSuccess = useCallback(
     (room: RoomRs) => {
@@ -68,14 +56,11 @@ export const useJoinedRoomListSocket = ({
     try {
       const socket = socketClient.getSocket();
 
-      socket.on("room:list", handleRoomList);
-      socket.on("message:new", handleNewMessage);
+      // 방 입장/퇴장 성공 이벤트만 처리 (전역 소켓에서 room:list, message:new는 이미 처리됨)
       socket.on("room:join:success", handleRoomJoinSuccess);
       socket.on("room:leave:success", handleRoomLeaveSuccess);
 
       return () => {
-        socket.off("room:list", handleRoomList);
-        socket.off("message:new", handleNewMessage);
         socket.off("room:join:success", handleRoomJoinSuccess);
         socket.off("room:leave:success", handleRoomLeaveSuccess);
       };
