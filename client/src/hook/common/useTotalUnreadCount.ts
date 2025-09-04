@@ -1,5 +1,5 @@
 import { roomQueries } from "@/query/room";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
 /**
@@ -7,12 +7,14 @@ import { useMemo } from "react";
  * 독립적인 쿼리를 사용하여 다른 컴포넌트와 분리됨
  */
 export const useTotalUnreadCount = () => {
-  const { data: rooms } = useSuspenseQuery({
+  const { data: rooms } = useQuery({
     ...roomQueries.joinedList(),
   });
 
   const totalUnreadCount = useMemo(() => {
-    return rooms.reduce((total, room) => total + (room.unreadCount || 0), 0);
+    return (
+      rooms?.reduce((total, room) => total + (room.unreadCount || 0), 0) ?? 0
+    );
   }, [rooms]);
 
   return {
