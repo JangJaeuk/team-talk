@@ -1,6 +1,6 @@
 "use client";
 
-import { useTotalUnreadCount } from "@/hook/chat/room-list/joined/useTotalUnreadCount";
+import { useTotalUnreadCount } from "@/hook/common/useTotalUnreadCount";
 import { TabType } from "@/type/tab";
 import { cn } from "@/util/style";
 
