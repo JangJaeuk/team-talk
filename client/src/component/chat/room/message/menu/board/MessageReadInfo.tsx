@@ -2,6 +2,7 @@ import { UserRs } from "@/rqrs/auth/userRs";
 import { MessageRs } from "@/rqrs/message/messageRs";
 import { ParticipantRs } from "@/rqrs/room/participantRs";
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 interface Props {
   menuRef: React.RefObject<HTMLDivElement | null>;
@@ -101,68 +102,83 @@ export const MessageReadInfo = ({
         </div>
       </div>
       {/* 모바일 전체 화면 모달 */}
-      <div
-        className="sm:hidden fixed inset-0 bg-black/50 z-50 transition-opacity duration-300"
-        style={{ opacity: isAnimating ? 1 : 0 }}
-      >
-        <div
-          className="flex flex-col h-[80vh] bg-white absolute inset-x-0 bottom-0 transition-all duration-300 ease-out"
-          style={{
-            transform: isAnimating ? "translateY(0)" : "translateY(100%)",
-          }}
-        >
-          <div className="sticky top-0 bg-white border-b border-gray-100">
-            <div className="flex items-center justify-between px-4 py-3">
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-semibold">읽은 사람</h3>
-              </div>
-              <button
-                onClick={() => setShowReadBy(false)}
-                className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                  stroke="currentColor"
-                  className="w-5 h-5"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="space-y-2">
-              {sortedParticipants.map((participant) => {
-                const hasRead = message.readBy.some(
-                  (read) => read.userId === participant.id
-                );
-                return (
-                  <div
-                    key={participant.id}
-                    className={`flex items-center justify-between p-3 rounded-lg text-sm ${
-                      hasRead ? "bg-blue-50" : "bg-gray-50"
-                    }`}
-                  >
-                    <span className="font-medium">{participant.nickname}</span>
-                    <span
-                      className={hasRead ? "text-blue-600" : "text-gray-500"}
-                    >
-                      {hasRead ? "읽음" : "읽지 않음"}
-                    </span>
+      {showReadBy &&
+        typeof window !== "undefined" &&
+        createPortal(
+          <div
+            className="sm:hidden fixed inset-0 bg-black/50 z-[99999] transition-opacity duration-300"
+            style={{ opacity: isAnimating ? 1 : 0 }}
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowReadBy(false);
+              }
+            }}
+          >
+            <div
+              className="flex flex-col h-[80vh] bg-white absolute inset-x-0 bottom-0 transition-all duration-300 ease-out"
+              style={{
+                transform: isAnimating ? "translateY(0)" : "translateY(100%)",
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 bg-white border-b border-gray-100">
+                <div className="flex items-center justify-between px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-semibold">읽은 사람</h3>
                   </div>
-                );
-              })}
+                  <button
+                    onClick={() => setShowReadBy(false)}
+                    className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                      stroke="currentColor"
+                      className="w-5 h-5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="space-y-2">
+                  {sortedParticipants.map((participant) => {
+                    const hasRead = message.readBy.some(
+                      (read) => read.userId === participant.id
+                    );
+                    return (
+                      <div
+                        key={participant.id}
+                        className={`flex items-center justify-between p-3 rounded-lg text-sm ${
+                          hasRead ? "bg-blue-50" : "bg-gray-50"
+                        }`}
+                      >
+                        <span className="font-medium">
+                          {participant.nickname}
+                        </span>
+                        <span
+                          className={
+                            hasRead ? "text-blue-600" : "text-gray-500"
+                          }
+                        >
+                          {hasRead ? "읽음" : "읽지 않음"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 };
