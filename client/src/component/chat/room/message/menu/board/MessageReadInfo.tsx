@@ -52,13 +52,13 @@ export const MessageReadInfo = ({
     <>
       {/* 데스크톱 팝오버 */}
       <div
-        className="hidden sm:block fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-3 min-w-[200px] max-w-[300px]"
+        className="hidden sm:block fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[200px] max-w-[300px] max-h-[400px] overflow-hidden"
         style={{
           top: menuRef.current?.getBoundingClientRect().top || 0,
           left: (menuRef.current?.getBoundingClientRect().left || 0) - 340,
         }}
       >
-        <div className="flex justify-between items-center mb-3">
+        <div className="p-3 flex justify-between items-center border-b border-gray-100">
           <h3 className="text-sm font-semibold">읽은 사람</h3>
           <button
             onClick={() => setShowReadBy(false)}
@@ -80,25 +80,30 @@ export const MessageReadInfo = ({
             </svg>
           </button>
         </div>
-        <div className="space-y-1.5">
-          {sortedParticipants.map((participant) => {
-            const hasRead = message.readBy.some(
-              (read) => read.userId === participant.id
-            );
-            return (
-              <div
-                key={participant.id}
-                className={`flex items-center justify-between p-1.5 rounded text-sm ${
-                  hasRead ? "bg-blue-50" : "bg-gray-50"
-                }`}
-              >
-                <span className="font-medium">{participant.nickname}</span>
-                <span className={hasRead ? "text-blue-600" : "text-gray-500"}>
-                  {hasRead ? "읽음" : "읽지 않음"}
-                </span>
-              </div>
-            );
-          })}
+        <div
+          className="overflow-y-auto p-3 custom-scrollbar"
+          style={{ maxHeight: "320px" }}
+        >
+          <div className="space-y-1.5">
+            {sortedParticipants.map((participant) => {
+              const hasRead = message.readBy.some(
+                (read) => read.userId === participant.id
+              );
+              return (
+                <div
+                  key={participant.id}
+                  className={`flex items-center justify-between p-1.5 rounded text-sm ${
+                    hasRead ? "bg-blue-50" : "bg-gray-50"
+                  }`}
+                >
+                  <span className="font-medium">{participant.nickname}</span>
+                  <span className={hasRead ? "text-blue-600" : "text-gray-500"}>
+                    {hasRead ? "읽음" : "읽지 않음"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
       {/* 모바일 전체 화면 모달 */}
