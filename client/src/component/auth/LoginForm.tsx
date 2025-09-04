@@ -54,8 +54,8 @@ export const LoginForm = () => {
   const isLoading = isLoginPending || isRegisterPending;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-md w-96">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-0">
+      <div className="bg-white p-6 sm:p-8 rounded-lg shadow-md w-full max-w-sm sm:w-96">
         <h1 className="text-2xl font-bold mb-6 text-center">
           {isRegister ? "회원가입" : "로그인"}
         </h1>
