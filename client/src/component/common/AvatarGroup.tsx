@@ -20,7 +20,7 @@ export const AvatarGroup = ({ users }: Props) => {
         />
       ) : users.length === 2 ? (
         // 2명일 때
-        <div className="flex w-full h-full">
+        <div className="flex w-full h-full gap-[1px]">
           {users.slice(0, 2).map((user) => (
             <Image
               key={user.id}
@@ -34,7 +34,7 @@ export const AvatarGroup = ({ users }: Props) => {
         </div>
       ) : users.length === 3 ? (
         // 3명일 때
-        <div className="flex flex-col w-full h-full">
+        <div className="flex flex-col w-full h-full gap-[1px]">
           <div className="flex justify-center">
             <Image
               key={users[0].id}
@@ -45,7 +45,7 @@ export const AvatarGroup = ({ users }: Props) => {
               className="w-[18px] h-[18px]"
             />
           </div>
-          <div className="flex">
+          <div className="flex gap-[1px]">
             {users.slice(1, 3).map((user) => (
               <Image
                 key={user.id}
@@ -60,7 +60,7 @@ export const AvatarGroup = ({ users }: Props) => {
         </div>
       ) : (
         // 4명 이상일 때
-        <div className="flex flex-wrap w-full h-full">
+        <div className="flex flex-wrap w-full h-full gap-[1px]">
           {users.slice(0, 4).map((user) => (
             <Image
               key={user.id}
