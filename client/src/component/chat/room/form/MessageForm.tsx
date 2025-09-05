@@ -11,7 +11,6 @@ export const MessageForm = ({ newMessage, onSubmit, onChange }: Props) => {
   const handleButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     inputRef.current?.focus();
     onSubmit(e);
-    console.log("포커스!");
   };
 
   return (
@@ -31,7 +30,7 @@ export const MessageForm = ({ newMessage, onSubmit, onChange }: Props) => {
         <button
           type="button"
           onClick={handleButtonClick}
-          className="px-3 sm:px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors font-medium text-xs sm:text-sm whitespace-nowrap"
+          className="px-3 sm:px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 active:bg-blue-700 active:scale-95 transition-all duration-150 transform font-medium text-xs sm:text-sm whitespace-nowrap shadow-md hover:shadow-lg active:shadow-sm"
         >
           전송
         </button>
