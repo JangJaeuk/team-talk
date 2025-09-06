@@ -13,7 +13,7 @@ export const ChatRoomSkeleton = () => {
       </div>
 
       {/* 메시지 영역 스켈레톤 */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col-reverse pl-2 pr-4 pt-4">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col-reverse pl-2 pr-4 pt-4 pb-8">
         <div className="space-y-4">
           {[...Array(5)].map((_, i) => (
             <div

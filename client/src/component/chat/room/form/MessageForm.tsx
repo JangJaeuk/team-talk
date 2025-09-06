@@ -9,6 +9,8 @@ interface Props {
 export const MessageForm = ({ newMessage, onSubmit, onChange }: Props) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const handleButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!newMessage.trim()) return;
+
     inputRef.current?.focus();
     onSubmit(e);
   };

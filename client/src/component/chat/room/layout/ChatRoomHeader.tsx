@@ -2,7 +2,7 @@ import type { RoomRs } from "@/rqrs/room/roomRs";
 import { useRouter } from "next/navigation";
 
 interface Props {
-  room: RoomRs | null;
+  room: RoomRs;
   isJoined: boolean;
   onToggleSidePanel: () => void;
 }
@@ -39,17 +39,13 @@ export const ChatRoomHeader = ({
         <div className="min-w-0 flex-1 mx-2 sm:mx-3">
           <div className="flex items-center gap-2">
             <h1 className="text-sm sm:text-base font-bold truncate">
-              {room?.name || "로딩 중..."}
+              {room.name}
             </h1>
-            {room?.participants && (
-              <span className="text-xs sm:text-sm text-gray-500 shrink-0">
-                {room.participants.length}
-              </span>
-            )}
+            <span className="text-xs sm:text-sm text-gray-500 shrink-0">
+              {room.participants.length}
+            </span>
           </div>
-          {room?.description && (
-            <p className="text-xs text-gray-500 truncate">{room.description}</p>
-          )}
+          <p className="text-xs text-gray-500 truncate">{room.description}</p>
         </div>
         {isJoined && (
           <button
