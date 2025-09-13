@@ -11,6 +11,7 @@ export const InitProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     setToken(getAccessToken());
+    console.log("initialize");
     setIsLoading(false);
   }, []);
 
